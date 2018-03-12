@@ -1,0 +1,22 @@
+#-------------------------------------------------------------------------------
+# Set-up gtest
+#-------------------------------------------------------------------------------
+set(GTEST "${CMAKE_SOURCE_DIR}/deps/googletest/googletest")
+set(GTEST_BINARY_DIR "${CMAKE_BINARY_DIR}/deps/googletest/googletest")
+add_subdirectory("${GTEST}" "${GTEST_BINARY_DIR}")
+
+#-------------------------------------------------------------------------------
+# Testception
+#-------------------------------------------------------------------------------
+add_executable(eos-tester-tests
+  base.cc
+)
+
+#-------------------------------------------------------------------------------
+# Link
+#-------------------------------------------------------------------------------
+target_link_libraries(eos-tester-tests
+  gtest_main
+  ${XROOTD_CL}
+  ${CMAKE_THREAD_LIBS_INIT}
+)
