@@ -2,6 +2,7 @@
 # Source files
 #-------------------------------------------------------------------------------
 add_executable(eos-tester
+  HierarchyBuilder.cc                                    HierarchyBuilder.hh
   main.cc
 )
 
@@ -9,5 +10,5 @@ add_executable(eos-tester
 # Link.
 #-------------------------------------------------------------------------------
 target_link_libraries(eos-tester
-  gflags
+  ${XROOTD_CL}
 )

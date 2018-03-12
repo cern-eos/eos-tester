@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: main.cc
+// File: HierarchyBuilder.cc
 // Author: Georgios Bitzes - CERN
 // ----------------------------------------------------------------------
 
@@ -21,29 +21,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#include <iostream>
-#include <sstream>
-#include <rang.hpp>
-#include <CLI11.hpp>
+#include "HierarchyBuilder.hh"
+using namespace eostest;
 
-int main(int argc, char **argv) {
-  // Reset terminal colors on exit
-  std::atexit([](){std::cout << rang::style::reset;});
+HierarchyBuilder::HierarchyBuilder(const HierarchyConstructionOptions &opt) : options(opt) {
+}
 
-  int32_t randomSeed = 0;
-  std::string targetPath = "";
-
-  CLI::App app{"This tool collects a number of functional and stress tests for the EOS storage system."};
-  app.add_option("--path", targetPath, "The path under which all tests will be run.")
-    ->required();
-
-  app.add_option("--seed", randomSeed, "Seed for random number generation");
-
-  try {
-    app.parse(argc, argv);
-  } catch (const CLI::ParseError &e) {
-    return app.exit(e);
-  }
-
-  return 0;
+bool HierarchyBuilder::next(HierarchyFile &result) {
+  return false;
 }
