@@ -5,6 +5,7 @@ add_library(eostester STATIC
   HashCalculator.cc                                      HashCalculator.hh
   HierarchyBuilder.cc                                    HierarchyBuilder.hh
   Manifest.cc                                            Manifest.hh
+  SelfCheckedFile.cc                                     SelfCheckedFile.hh
 )
 
 #-------------------------------------------------------------------------------

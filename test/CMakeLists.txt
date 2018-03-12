@@ -17,6 +17,7 @@ add_executable(eos-tester-tests
   base.cc
   hierarchy-builder.cc
   manifest.cc
+  self-checked-file.cc
 )
 
 #-------------------------------------------------------------------------------
