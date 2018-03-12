@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: HierarchyBuilder.cc
+// File: Manifest.cc
 // Author: Georgios Bitzes - CERN
 // ----------------------------------------------------------------------
 
@@ -21,12 +21,52 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#include "HierarchyBuilder.hh"
+#include "Manifest.hh"
+#include "HashCalculator.hh"
+#include <sstream>
 using namespace eostest;
 
-HierarchyBuilder::HierarchyBuilder(const HierarchyConstructionOptions &opt) : options(opt) {
+Manifest::Manifest(const std::string &file) : filename(file) {}
+
+bool Manifest::fromString(const std::string &filename, std::string &error) {
+  return false;
 }
 
-bool HierarchyBuilder::next(HierarchyFile &result) {
-  return false;
+std::string Manifest::checksum() const {
+  return HashCalculator::sha256(this->toStringWithoutChecksum());
+}
+
+std::string Manifest::toString() const {
+  std::ostringstream ss;
+  ss << toStringWithoutChecksum();
+  ss << HashCalculator::base16Encode(checksum()) << std::endl;
+  return ss.str();
+}
+
+std::string Manifest::toStringWithoutChecksum() const {
+  std::ostringstream ss;
+
+  ss << "MANIFEST: " << filename << std::endl;
+  ss << "----------" << std::endl;
+
+  for(const std::string& subdir : directories) {
+    ss << "SUBDIR: " << subdir << std::endl;
+  }
+
+  ss << "----------" << std::endl;
+
+  for(const std::string& file : files) {
+    ss << "FILE: " << file << std::endl;
+  }
+
+  ss << "----------" << std::endl;
+  return ss.str();
+}
+
+void Manifest::addFile(const std::string &file) {
+  files.insert(file);
+}
+
+void Manifest::addSubdir(const std::string &subdir) {
+  directories.insert(subdir);
 }

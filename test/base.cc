@@ -5,7 +5,7 @@
 
 /************************************************************************
  * eos-tester - a tool for stress testing EOS instances                 *
- * Copyright (C) 2016 CERN/Switzerland                                  *
+ * Copyright (C) 2018 CERN/Switzerland                                  *
  *                                                                      *
  * This program is free software: you can redistribute it and/or modify *
  * it under the terms of the GNU General Public License as published by *
@@ -22,7 +22,10 @@
  ************************************************************************/
 
 #include <gtest/gtest.h>
+#include "HashCalculator.hh"
+using namespace eostest;
 
-TEST(Simple, Test) {
-  ASSERT_EQ(1, 1);
+TEST(HashCalculator, BasicSanity) {
+  std::string hash = HashCalculator::base16Encode(HashCalculator::sha256("lalalal"));
+  ASSERT_EQ(hash, "1ab094d49f13d198d8e5a80d44e697bd82756ad63403ab75ffb7b5d6c8fcdac6");
 }

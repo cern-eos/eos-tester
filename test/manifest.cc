@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: HierarchyBuilder.cc
+// File: manifest.cc
 // Author: Georgios Bitzes - CERN
 // ----------------------------------------------------------------------
 
@@ -21,12 +21,57 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#include "HierarchyBuilder.hh"
+#include <gtest/gtest.h>
+#include "Manifest.hh"
+#include "HashCalculator.hh"
 using namespace eostest;
 
-HierarchyBuilder::HierarchyBuilder(const HierarchyConstructionOptions &opt) : options(opt) {
-}
+TEST(Manifest, BasicSanity) {
+  Manifest manifest("/eos/pps/base/somedir/manifest");
 
-bool HierarchyBuilder::next(HierarchyFile &result) {
-  return false;
+  // empty manifest
+  ASSERT_EQ(manifest.toString(),
+    "MANIFEST: /eos/pps/base/somedir/manifest\n"
+    "----------\n"
+    "----------\n"
+    "----------\n"
+    "d5cd8d066bf2abb559bc7423407550912a794c0fd445113b90259ad7647d22b3\n"
+  );
+
+  manifest.addFile("f1");
+  manifest.addFile("f2");
+  manifest.addFile("f3");
+
+  ASSERT_EQ(manifest.toString(),
+    "MANIFEST: /eos/pps/base/somedir/manifest\n"
+    "----------\n"
+    "----------\n"
+    "FILE: f1\n"
+    "FILE: f2\n"
+    "FILE: f3\n"
+    "----------\n"
+    "37d8794ac29b2f7bcf80ea8477d7b1e210de6334f3315e20e13a3c873ae9895c\n"
+  );
+
+  ASSERT_EQ(manifest.checksum(), HashCalculator::sha256(manifest.toStringWithoutChecksum()));
+
+  manifest.addSubdir("dir1");
+  manifest.addSubdir("dir2");
+  manifest.addSubdir("dir3");
+
+  ASSERT_EQ(manifest.toString(),
+    "MANIFEST: /eos/pps/base/somedir/manifest\n"
+    "----------\n"
+    "SUBDIR: dir1\n"
+    "SUBDIR: dir2\n"
+    "SUBDIR: dir3\n"
+    "----------\n"
+    "FILE: f1\n"
+    "FILE: f2\n"
+    "FILE: f3\n"
+    "----------\n"
+    "11d888bdbe49f3ac1709d7c7b9fe2bd1579915ed8a431982dad42fd3b9fdb468\n"
+  );
+
+  ASSERT_EQ(manifest.checksum(), HashCalculator::sha256(manifest.toStringWithoutChecksum()));
 }

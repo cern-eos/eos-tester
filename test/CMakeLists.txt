@@ -16,13 +16,16 @@ include_directories(../src)
 add_executable(eos-tester-tests
   base.cc
   hierarchy-builder.cc
+  manifest.cc
 )
 
 #-------------------------------------------------------------------------------
 # Link
 #-------------------------------------------------------------------------------
 target_link_libraries(eos-tester-tests
+  eostester
   gtest_main
+  ${OPENSSL_LIBRARIES}
   ${XROOTD_CL}
   ${CMAKE_THREAD_LIBS_INIT}
 )

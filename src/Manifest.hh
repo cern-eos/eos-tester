@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: HierarchyBuilder.cc
+// File: Manifest.hh
 // Author: Georgios Bitzes - CERN
 // ----------------------------------------------------------------------
 
@@ -21,12 +21,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#include "HierarchyBuilder.hh"
-using namespace eostest;
+#ifndef EOSTESTER_MANIFEST_H
+#define EOSTESTER_MANIFEST_H
 
-HierarchyBuilder::HierarchyBuilder(const HierarchyConstructionOptions &opt) : options(opt) {
+#include <set>
+#include <string>
+
+namespace eostest {
+
+class Manifest {
+public:
+  Manifest(const std::string &filename);
+
+  std::string toString() const;
+  std::string toStringWithoutChecksum() const;
+  std::string checksum() const;
+  bool fromString(const std::string &filename, std::string &error);
+
+  void addFile(const std::string &file);
+  void addSubdir(const std::string &subdir);
+
+private:
+  std::string filename;
+  std::set<std::string> directories;
+  std::set<std::string> files;
+};
+
 }
 
-bool HierarchyBuilder::next(HierarchyFile &result) {
-  return false;
-}
+#endif

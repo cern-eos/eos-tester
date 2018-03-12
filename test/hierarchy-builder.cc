@@ -5,7 +5,7 @@
 
 /************************************************************************
  * eos-tester - a tool for stress testing EOS instances                 *
- * Copyright (C) 2016 CERN/Switzerland                                  *
+ * Copyright (C) 2018 CERN/Switzerland                                  *
  *                                                                      *
  * This program is free software: you can redistribute it and/or modify *
  * it under the terms of the GNU General Public License as published by *
@@ -25,5 +25,5 @@
 #include "HierarchyBuilder.hh"
 
 TEST(HierachyBuilder, BasicSanity) {
-  
+
 }

@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: HierarchyBuilder.cc
+// File: HashCalculator.hh
 // Author: Georgios Bitzes - CERN
 // ----------------------------------------------------------------------
 
@@ -21,12 +21,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#include "HierarchyBuilder.hh"
-using namespace eostest;
+#ifndef EOSTESTER_HASH_CALCULATOR_H
+#define EOSTESTER_HASH_CALCULATOR_H
 
-HierarchyBuilder::HierarchyBuilder(const HierarchyConstructionOptions &opt) : options(opt) {
+#include <string>
+
+namespace eostest {
+
+class HashCalculator {
+public:
+  static std::string sha256(const std::string &contents);
+  static std::string base16Encode(const std::string &contents);
+};
+
 }
 
-bool HierarchyBuilder::next(HierarchyFile &result) {
-  return false;
-}
+#endif
