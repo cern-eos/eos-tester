@@ -37,6 +37,10 @@ public:
   std::string toString() const;
   std::string checksum() const;
 
+  bool parse(const std::string &contents);
+  std::string getFilename() const;
+  std::string getRandomBytes() const;
+
 private:
   std::string filename;
   std::string randomBytes;

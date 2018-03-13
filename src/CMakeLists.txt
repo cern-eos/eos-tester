@@ -6,6 +6,7 @@ add_library(eostester STATIC
   HierarchyBuilder.cc                                    HierarchyBuilder.hh
   Manifest.cc                                            Manifest.hh
   SelfCheckedFile.cc                                     SelfCheckedFile.hh
+  Utils.cc                                               Utils.hh
 )
 
 #-------------------------------------------------------------------------------

@@ -45,7 +45,4 @@ TEST(HierachyBuilder, BasicSanity) {
   }
 
   ASSERT_EQ(files, 50);
-
-
-
 }

@@ -27,8 +27,12 @@
 #include <vector>
 #include <string>
 #include <random>
+#include <sstream>
 
 namespace eostest {
+
+bool startswith(const std::string &str, size_t start, const std::string &prefix);
+bool my_strtoll(const std::string &str, int64_t &ret);
 
 inline std::string chopPath(const std::string &path) {
   std::string retval = path;
@@ -63,6 +67,8 @@ inline std::string getRandomAlphanumericBytes(size_t length, std::mt19937 &gener
 
   return ss.str();
 }
+
+
 
 
 }

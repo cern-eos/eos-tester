@@ -28,13 +28,28 @@ using namespace eostest;
 TEST(SelfCheckedFile, BasicSanity) {
   SelfCheckedFile scf("/eos/pps/base/f1", "some random bytes");
 
-  ASSERT_EQ(scf.toString(),
+  std::string contents =
     "FILENAME: /eos/pps/base/f1\n"
     "RANDOM-BYTES: 17\n"
     "----------\n"
     "some random bytes\n"
     "----------\n"
-    "3d5b6e328474107d6a1c6d61d92a160e0d1eb4d3c3b99bc8574ebde0fba02eba\n"
-  );
+    "3d5b6e328474107d6a1c6d61d92a160e0d1eb4d3c3b99bc8574ebde0fba02eba\n";
 
+  ASSERT_EQ(scf.toString(), contents);
+
+  SelfCheckedFile scf2;
+  ASSERT_TRUE(scf2.parse(contents));
+  ASSERT_EQ(scf2.getFilename(), "/eos/pps/base/f1");
+  ASSERT_EQ(scf2.getRandomBytes(), "some random bytes");
+
+  contents =
+    "FILENAME: /eos/pps/base/f1\n"
+    "RANDOM-BYTES: 17\n"
+    "----------\n"
+    "some random bytes\n"
+    "----------\n"
+    "3d6b6e328474107d6a1c6d61d92a160e0d1eb4d3c3b99bc8574ebde0fba02eba\n";
+
+  ASSERT_FALSE(scf2.parse(contents));
 }

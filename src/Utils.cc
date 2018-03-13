@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: Macros.hh
+// File: Utils.cc
 // Author: Georgios Bitzes - CERN
 // ----------------------------------------------------------------------
 
@@ -21,10 +21,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#ifndef EOSTESTER_MACROS_H
-#define EOSTESTER_MACROS_H
+#include <climits>
+#include "Utils.hh"
+using namespace eostest;
 
-#define SSTR(message) static_cast<std::ostringstream&>(std::ostringstream().flush() << message).str()
-#define DBG(message) std::cout << __FILE__ << ":" << __LINE__ << " -- " << #message << " = " << message << std::endl
+bool eostest::startswith(const std::string &str, size_t start, const std::string &prefix) {
+  if(prefix.size() > str.size() + start) return false;
 
-#endif
+  for(size_t i = 0; i < prefix.size(); i++) {
+    if(str[i+start] != prefix[i]) return false;
+  }
+  return true;
+}
+
+bool eostest::my_strtoll(const std::string &str, int64_t &ret) {
+  char *endptr = NULL;
+  ret = strtoll(str.c_str(), &endptr, 10);
+  if(endptr != str.c_str() + str.size() || ret == LLONG_MIN || ret == LONG_LONG_MAX) {
+    return false;
+  }
+  return true;
+}
