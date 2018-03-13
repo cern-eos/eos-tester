@@ -31,6 +31,7 @@ namespace eostest {
 
 class Manifest {
 public:
+  Manifest();
   Manifest(const std::string &filename);
 
   std::string toString() const;
@@ -43,9 +44,17 @@ public:
 
   bool popFile(std::string &file);
   bool popSubdir(std::string &subdir);
-
   std::string getFilename() const;
+
+  void clear();
+  bool parse(const std::string &contents);
+
+  std::set<std::string>& getDirectories();
+  std::set<std::string>& getFiles();
+
 private:
+  bool parseList(const std::string &contents, size_t& index, bool dir);
+
   std::string filename;
   std::set<std::string> directories;
   std::set<std::string> files;

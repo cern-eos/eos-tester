@@ -34,3 +34,20 @@ TEST(HashCalculator, BasicSanity) {
 TEST(Utils, chopPath) {
   ASSERT_EQ("/eos/some/path", chopPath("/eos/some/path/abc"));
 }
+
+TEST(Utils, extractLineWithPrefix) {
+  std::string contents ="abc\nFILENAME: adgfas\nasdfa";
+  std::string extracted;
+  ASSERT_TRUE(extractLineWithPrefix(contents, 4, "FILENAME: ", extracted));
+  ASSERT_EQ(extracted, "adgfas");
+
+  contents ="abc\nFILENAME:: adgfas\nasdfa";
+  ASSERT_FALSE(extractLineWithPrefix(contents, 4, "FILENAME: ", extracted));
+
+  contents ="abc\nFILENAME: adgfas\n";
+  ASSERT_TRUE(extractLineWithPrefix(contents, 4, "FILENAME: ", extracted));
+  ASSERT_EQ(extracted, "adgfas");
+
+  contents ="abc\nFILENAME: adgfas";
+  ASSERT_FALSE(extractLineWithPrefix(contents, 4, "FILENAME: ", extracted));
+}

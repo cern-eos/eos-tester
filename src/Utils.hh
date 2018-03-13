@@ -33,6 +33,8 @@ namespace eostest {
 
 bool startswith(const std::string &str, size_t start, const std::string &prefix);
 bool my_strtoll(const std::string &str, int64_t &ret);
+bool extractLineWithPrefix(const std::string &str, size_t start, const std::string &prefix, std::string &val);
+bool isEqualAndProgressIndex(const std::string &str, size_t &index, const std::string &compare);
 
 inline std::string chopPath(const std::string &path) {
   std::string retval = path;

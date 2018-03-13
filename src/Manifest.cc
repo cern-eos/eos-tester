@@ -21,10 +21,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
+#include <sstream>
+#include <iostream>
 #include "Manifest.hh"
 #include "HashCalculator.hh"
-#include <sstream>
+#include "Utils.hh"
 using namespace eostest;
+
+namespace {
+  const std::string kManifest = "MANIFEST: ";
+  const std::string kSeparator = "----------\n";
+  const std::string kSubdir = "SUBDIR: ";
+  const std::string kFile = "FILE: ";
+}
+
+Manifest::Manifest() {}
 
 Manifest::Manifest(const std::string &file) : filename(file) {}
 
@@ -46,20 +57,20 @@ std::string Manifest::toString() const {
 std::string Manifest::toStringWithoutChecksum() const {
   std::ostringstream ss;
 
-  ss << "MANIFEST: " << filename << std::endl;
-  ss << "----------" << std::endl;
+  ss << kManifest << filename << std::endl;
+  ss << kSeparator;
 
   for(const std::string& subdir : directories) {
-    ss << "SUBDIR: " << subdir << std::endl;
+    ss << kSubdir << subdir << std::endl;
   }
 
-  ss << "----------" << std::endl;
+  ss << kSeparator;
 
   for(const std::string& file : files) {
-    ss << "FILE: " << file << std::endl;
+    ss << kFile << file << std::endl;
   }
 
-  ss << "----------" << std::endl;
+  ss << kSeparator;
   return ss.str();
 }
 
@@ -89,4 +100,59 @@ bool Manifest::popSubdir(std::string &subdir) {
 
 std::string Manifest::getFilename() const {
   return filename;
+}
+
+void Manifest::clear() {
+  filename.clear();
+  files.clear();
+  directories.clear();
+}
+
+bool Manifest::parse(const std::string &contents) {
+  clear();
+
+  size_t index = 0;
+  if(!extractLineWithPrefix(contents, index, kManifest, filename)) return false;
+  index += kManifest.size() + 1 + filename.size();
+
+  if(!isEqualAndProgressIndex(contents, index, kSeparator)) return false;
+  if(!parseList(contents, index, true)) return false;
+  if(!parseList(contents, index, false)) return false;
+
+  std::string givenChecksum;
+  if(!extractLineWithPrefix(contents.c_str(), index, "", givenChecksum)) return false;
+  if(givenChecksum.size() != 64) return false;
+
+  if(HashCalculator::base16Encode(checksum()) != givenChecksum) return false;
+  if(index + givenChecksum.size() + 1 != contents.size()) return false;
+  return true;
+}
+
+bool Manifest::parseList(const std::string &contents, size_t& index, bool dirs) {
+  std::string prefix = kFile;
+  if(dirs) prefix = kSubdir;
+
+  while(true) {
+    if(contents.size() <= index) return false;
+    if(isEqualAndProgressIndex(contents, index, kSeparator)) return true;
+
+    std::string tmp;
+    if(!extractLineWithPrefix(contents, index, prefix, tmp)) return false;
+    index += prefix.size() + 1 + tmp.size();
+
+    if(dirs) {
+      directories.insert(tmp);
+    }
+    else {
+      files.insert(tmp);
+    }
+  }
+}
+
+std::set<std::string>& Manifest::getDirectories() {
+  return directories;
+}
+
+std::set<std::string>& Manifest::getFiles() {
+  return files;
 }

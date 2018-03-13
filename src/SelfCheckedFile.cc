@@ -61,41 +61,25 @@ std::string SelfCheckedFile::toString() const {
   return ss.str();
 }
 
+void SelfCheckedFile::clear() {
+  filename.clear();
+  randomBytes.clear();
+}
+
 bool SelfCheckedFile::parse(const std::string &contents) {
-  if(!startswith(contents, 0, kFilenamePrefix)) return false;
+  clear();
 
-  std::ostringstream ss;
+  std::string value;
+  if(!extractLineWithPrefix(contents.c_str(), 0, kFilenamePrefix, filename)) return false;
+  size_t index = kFilenamePrefix.size() + 1 + filename.size();
 
-  size_t index = kFilenamePrefix.size();
-  while(index < contents.size() && contents[index] != '\n') {
-    ss << contents[index];
-    index++;
-  }
-
-  filename = ss.str();
-  if(filename.empty()) return false;
-  index++;
-
-  if(!startswith(contents, index, kRandomBytesPrefix)) return false;
-  index += kRandomBytesPrefix.size();
-
-  size_t parseIndexStart = index;
-  size_t parseIndexEnd = index;
-
-  while(parseIndexEnd < contents.size() && contents[parseIndexEnd] != '\n') {
-    parseIndexEnd++;
-  }
-
-  if(parseIndexEnd == parseIndexStart) return false;
-
-  std::string value = std::string(contents.c_str() + parseIndexStart, parseIndexEnd - parseIndexStart);
+  if(!extractLineWithPrefix(contents.c_str(), index, kRandomBytesPrefix, value)) return false;
   int64_t randomBytesLength = -1;
-
   if(!my_strtoll(value, randomBytesLength)) return false;
-  index = parseIndexEnd;
+  index += kRandomBytesPrefix.size() + 1 + value.size();
 
-  if(!startswith(contents, index, SSTR("\n" << kSeparator << "\n"))) return false;
-  index += kSeparator.size() + 2;
+  if(!startswith(contents, index, SSTR(kSeparator << "\n"))) return false;
+  index += kSeparator.size() + 1;
 
   if(contents.size() <= index + randomBytesLength) return false;
   randomBytes = std::string(contents.c_str(), index, randomBytesLength);
@@ -104,20 +88,11 @@ bool SelfCheckedFile::parse(const std::string &contents) {
   if(!startswith(contents, index, SSTR("\n" << kSeparator << "\n"))) return false;
   index += kSeparator.size() + 2;
 
-  parseIndexStart = index;
-  parseIndexEnd = index;
-  while(parseIndexEnd < contents.size() && contents[parseIndexEnd] != '\n') {
-    parseIndexEnd++;
-  }
-
-  if(parseIndexEnd+1 != contents.size()) return false;
-  if(contents[parseIndexEnd] != '\n') return false;
-
-  std::string givenChecksum = std::string(contents.c_str() + parseIndexStart, parseIndexEnd - parseIndexStart);
+  std::string givenChecksum;
+  if(!extractLineWithPrefix(contents.c_str(), index, "", givenChecksum)) return false;
   if(givenChecksum.size() != 64) return false;
 
   if(HashCalculator::base16Encode(checksum()) != givenChecksum) return false;
-
   return true;
 }
 
@@ -127,4 +102,9 @@ std::string SelfCheckedFile::getFilename() const {
 
 std::string SelfCheckedFile::getRandomBytes() const {
   return randomBytes;
+}
+
+bool SelfCheckedFile::operator==(const SelfCheckedFile &rhs) const {
+  return filename == rhs.filename && randomBytes == rhs.randomBytes;
+
 }

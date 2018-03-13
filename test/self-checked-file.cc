@@ -52,4 +52,5 @@ TEST(SelfCheckedFile, BasicSanity) {
     "3d6b6e328474107d6a1c6d61d92a160e0d1eb4d3c3b99bc8574ebde0fba02eba\n";
 
   ASSERT_FALSE(scf2.parse(contents));
+  ASSERT_EQ(scf, scf2);
 }

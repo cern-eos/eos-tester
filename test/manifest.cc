@@ -98,3 +98,45 @@ TEST(Manifest, BasicSanity) {
 
   ASSERT_FALSE(manifest.popSubdir(tmp));
 }
+
+TEST(Manifest, Parsing) {
+  std::string contents =
+    "MANIFEST: /eos/pps/base/somedir/manifest\n"
+    "----------\n"
+    "----------\n"
+    "FILE: f1\n"
+    "FILE: f2\n"
+    "FILE: f3\n"
+    "----------\n"
+    "37d8794ac29b2f7bcf80ea8477d7b1e210de6334f3315e20e13a3c873ae9895c\n";
+
+  Manifest manifest;
+  ASSERT_TRUE(manifest.parse(contents));
+  ASSERT_EQ(manifest.getFilename(), "/eos/pps/base/somedir/manifest");
+
+  ASSERT_TRUE(manifest.getDirectories().empty());
+
+  std::string item;
+  ASSERT_TRUE(manifest.popFile(item));
+  ASSERT_EQ(item, "f1");
+
+  ASSERT_TRUE(manifest.popFile(item));
+  ASSERT_EQ(item, "f2");
+
+  ASSERT_TRUE(manifest.popFile(item));
+  ASSERT_EQ(item, "f3");
+
+  ASSERT_FALSE(manifest.popFile(item));
+
+  contents =
+    "MANIFEST: /eos/pps/base/somedir/manifest\n"
+    "----------\n"
+    "----------\n"
+    "FILE: f1\n"
+    "FILE: f2\n"
+    "FILE: f3\n"
+    "----------\n"
+    "3718794ac29b2f7bcf80ea8477d7b1e210de6334f3315e20e13a3c873ae9895c\n";
+
+  ASSERT_FALSE(manifest.parse(contents));
+}

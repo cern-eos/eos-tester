@@ -40,6 +40,8 @@ public:
   bool parse(const std::string &contents);
   std::string getFilename() const;
   std::string getRandomBytes() const;
+  bool operator==(const SelfCheckedFile &rhs) const;
+  void clear();
 
 private:
   std::string filename;
