@@ -25,6 +25,10 @@
 #define EOSTESTER_HIERARCHY_BUILDER_H
 
 #include <string>
+#include <random>
+#include <stack>
+
+#include "Manifest.hh"
 
 namespace eostest {
 
@@ -32,10 +36,10 @@ struct HierarchyConstructionOptions {
   std::string base;
   int32_t seed;
   size_t depth;
-  int64_t files; // number of files, including manifests
+  size_t files; // total number of files, including manifests
 };
 
-struct HierarchyFile {
+struct HierarchyEntry {
   std::string fullPath;
   std::string contents;
   bool dir;
@@ -44,11 +48,25 @@ struct HierarchyFile {
 class HierarchyBuilder {
 public:
   HierarchyBuilder(const HierarchyConstructionOptions &opts);
-  bool next(HierarchyFile &result);
+  bool next(HierarchyEntry &result);
 
 private:
-  HierarchyConstructionOptions options;
+  void insertNode(const std::string &path);
+  std::string getRandomFileContents();
 
+  HierarchyConstructionOptions options;
+  std::mt19937 generator;
+
+  struct Node {
+    Node(const std::string &dirname) : manifest(dirname + "/MANIFEST"),
+      path(dirname) {}
+
+    Manifest manifest;
+    bool manifestDone = false;
+    std::string path;
+  };
+
+  std::stack<Node> stack;
 };
 
 }

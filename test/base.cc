@@ -23,9 +23,14 @@
 
 #include <gtest/gtest.h>
 #include "HashCalculator.hh"
+#include "Utils.hh"
 using namespace eostest;
 
 TEST(HashCalculator, BasicSanity) {
   std::string hash = HashCalculator::base16Encode(HashCalculator::sha256("lalalal"));
   ASSERT_EQ(hash, "1ab094d49f13d198d8e5a80d44e697bd82756ad63403ab75ffb7b5d6c8fcdac6");
+}
+
+TEST(Utils, chopPath) {
+  ASSERT_EQ("/eos/some/path", chopPath("/eos/some/path/abc"));
 }

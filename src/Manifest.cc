@@ -70,3 +70,23 @@ void Manifest::addFile(const std::string &file) {
 void Manifest::addSubdir(const std::string &subdir) {
   directories.insert(subdir);
 }
+
+bool Manifest::popFile(std::string &file) {
+  if(files.empty()) return false;
+  auto it = files.begin();
+  file = *it;
+  files.erase(it);
+  return true;
+}
+
+bool Manifest::popSubdir(std::string &subdir) {
+  if(directories.empty()) return false;
+  auto it = directories.begin();
+  subdir = *it;
+  directories.erase(it);
+  return true;
+}
+
+std::string Manifest::getFilename() const {
+  return filename;
+}

@@ -41,6 +41,10 @@ public:
   void addFile(const std::string &file);
   void addSubdir(const std::string &subdir);
 
+  bool popFile(std::string &file);
+  bool popSubdir(std::string &subdir);
+
+  std::string getFilename() const;
 private:
   std::string filename;
   std::set<std::string> directories;

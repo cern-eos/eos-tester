@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: hierarchy-builder.cc
+// File: Macros.hh
 // Author: Georgios Bitzes - CERN
 // ----------------------------------------------------------------------
 
@@ -21,31 +21,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#include <gtest/gtest.h>
-#include "HierarchyBuilder.hh"
-using namespace eostest;
+#ifndef EOSTESTER_MACROS_H
+#define EOSTESTER_MACROS_H
 
-TEST(HierachyBuilder, BasicSanity) {
-  HierarchyConstructionOptions options;
-  options.base = "/eos/test";
-  options.seed = 42;
-  options.depth = 12;
-  options.files = 50;
+#define SSTR(message) static_cast<std::ostringstream&>(std::ostringstream().flush() << message).str()
 
-  HierarchyBuilder builder(options);
-  HierarchyEntry entry;
-
-  size_t files = 0;
-  while(builder.next(entry)) {
-    if(!entry.dir) {
-      files++;
-    }
-
-    std::cout << entry.fullPath << std::endl;
-  }
-
-  ASSERT_EQ(files, 50);
-
-
-
-}
+#endif

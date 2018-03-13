@@ -74,4 +74,27 @@ TEST(Manifest, BasicSanity) {
   );
 
   ASSERT_EQ(manifest.checksum(), HashCalculator::sha256(manifest.toStringWithoutChecksum()));
+
+  std::string tmp;
+  ASSERT_TRUE(manifest.popFile(tmp));
+  ASSERT_EQ(tmp, "f1");
+
+  ASSERT_TRUE(manifest.popFile(tmp));
+  ASSERT_EQ(tmp, "f2");
+
+  ASSERT_TRUE(manifest.popFile(tmp));
+  ASSERT_EQ(tmp, "f3");
+
+  ASSERT_FALSE(manifest.popFile(tmp));
+
+  ASSERT_TRUE(manifest.popSubdir(tmp));
+  ASSERT_EQ(tmp, "dir1");
+
+  ASSERT_TRUE(manifest.popSubdir(tmp));
+  ASSERT_EQ(tmp, "dir2");
+
+  ASSERT_TRUE(manifest.popSubdir(tmp));
+  ASSERT_EQ(tmp, "dir3");
+
+  ASSERT_FALSE(manifest.popSubdir(tmp));
 }
