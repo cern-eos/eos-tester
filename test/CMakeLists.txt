@@ -18,6 +18,7 @@ add_executable(eos-tester-tests
   hierarchy-builder.cc
   manifest.cc
   self-checked-file.cc
+  xrdcl-executor.cc
 )
 
 #-------------------------------------------------------------------------------
@@ -25,6 +26,7 @@ add_executable(eos-tester-tests
 #-------------------------------------------------------------------------------
 target_link_libraries(eos-tester-tests
   eostester
+  folly
   gtest_main
   ${OPENSSL_LIBRARIES}
   ${XROOTD_CL}

@@ -1,4 +1,6 @@
-include_directories(${XROOTD_INCLUDE_DIR})
+include_directories(
+  ${XROOTD_INCLUDE_DIR}
+)
 
 #-------------------------------------------------------------------------------
 # Source files
@@ -6,7 +8,6 @@ include_directories(${XROOTD_INCLUDE_DIR})
 add_library(eostester STATIC
   HashCalculator.cc                                      HashCalculator.hh
   HierarchyBuilder.cc                                    HierarchyBuilder.hh
-  HierarchyValidator.cc                                  HierarchyValidator.hh
   Manifest.cc                                            Manifest.hh
   SelfCheckedFile.cc                                     SelfCheckedFile.hh
   Utils.cc                                               Utils.hh
@@ -25,6 +26,7 @@ add_executable(eos-tester
 #-------------------------------------------------------------------------------
 target_link_libraries(eos-tester
   eostester
+  folly
   ${OPENSSL_LIBRARIES}
   ${XROOTD_CL}
 )
