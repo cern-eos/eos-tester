@@ -1,3 +1,6 @@
 [submodule "deps/googletest"]
 	path = deps/googletest
 	url = https://github.com/google/googletest
+[submodule "deps/folly"]
+	path = deps/folly
+	url = https://github.com/facebook/folly

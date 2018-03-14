@@ -1,12 +1,16 @@
+include_directories(${XROOTD_INCLUDE_DIR})
+
 #-------------------------------------------------------------------------------
 # Source files
 #-------------------------------------------------------------------------------
 add_library(eostester STATIC
   HashCalculator.cc                                      HashCalculator.hh
   HierarchyBuilder.cc                                    HierarchyBuilder.hh
+  HierarchyValidator.cc                                  HierarchyValidator.hh
   Manifest.cc                                            Manifest.hh
   SelfCheckedFile.cc                                     SelfCheckedFile.hh
   Utils.cc                                               Utils.hh
+  XrdClExecutor.cc                                       XrdClExecutor.hh
 )
 
 #-------------------------------------------------------------------------------

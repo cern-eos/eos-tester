@@ -32,7 +32,7 @@ using namespace eostest;
 namespace {
   const std::string kFilenamePrefix = "FILENAME: ";
   const std::string kRandomBytesPrefix = "RANDOM-BYTES: ";
-  const std::string kSeparator = "----------";
+  const std::string kSeparator = "----------\n";
 }
 
 SelfCheckedFile::SelfCheckedFile() { }
@@ -48,9 +48,9 @@ std::string SelfCheckedFile::toStringWithoutChecksum() const {
   std::stringstream ss;
   ss << kFilenamePrefix << filename << std::endl;
   ss << kRandomBytesPrefix << randomBytes.size() << std::endl;
-  ss << kSeparator << std::endl;
+  ss << kSeparator;
   ss << randomBytes << std::endl;
-  ss << kSeparator << std::endl;
+  ss << kSeparator;
   return ss.str();
 }
 
@@ -78,15 +78,13 @@ bool SelfCheckedFile::parse(const std::string &contents) {
   if(!my_strtoll(value, randomBytesLength)) return false;
   index += kRandomBytesPrefix.size() + 1 + value.size();
 
-  if(!startswith(contents, index, SSTR(kSeparator << "\n"))) return false;
-  index += kSeparator.size() + 1;
+  if(!isEqualAndProgressIndex(contents, index, kSeparator)) return false;
 
   if(contents.size() <= index + randomBytesLength) return false;
   randomBytes = std::string(contents.c_str(), index, randomBytesLength);
   index += randomBytesLength;
 
-  if(!startswith(contents, index, SSTR("\n" << kSeparator << "\n"))) return false;
-  index += kSeparator.size() + 2;
+  if(!isEqualAndProgressIndex(contents, index, SSTR("\n" << kSeparator))) return false;
 
   std::string givenChecksum;
   if(!extractLineWithPrefix(contents.c_str(), index, "", givenChecksum)) return false;

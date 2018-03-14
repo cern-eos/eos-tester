@@ -10,6 +10,7 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(XRootD REQUIRED)
 find_package(OpenSSL REQUIRED)
 include_directories(deps)
+add_subdirectory(deps/folly)
 
 #-------------------------------------------------------------------------------
 # Compiler options
