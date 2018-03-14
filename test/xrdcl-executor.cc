@@ -26,6 +26,9 @@
 using namespace eostest;
 
 TEST(DISABLED_XrdClExecutor, BasicSanity) {
-  OperationStatus status = XrdClExecutor::mkdir(1, "root://eospps.cern.ch///eos/user/gbitzes/sentinel-234").get();
+  OperationStatus status = XrdClExecutor::mkdir(1, "root://eospps.cern.ch///eos/user/gbitzes/eostester/").get();
   ASSERT_TRUE(status.ok());
+
+  XrdClExecutor::put(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/f1", "adfasf");
+
 }
