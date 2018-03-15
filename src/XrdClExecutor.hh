@@ -32,6 +32,7 @@
 namespace eostest {
 
 class OpenStatus;
+class ReadOutcome;
 
 class OperationStatus {
 public:
@@ -41,7 +42,20 @@ public:
 
   bool ok() const;
   std::string toString() const;
+
+  void addError(const std::string &err);
   std::vector<std::string> errors;
+};
+
+class ReadStatus {
+public:
+  ReadStatus() {}
+  ReadStatus(const ReadOutcome &outcome);
+
+  OperationStatus status;
+  std::string contents;
+
+  bool ok() const;
 };
 
 class XrdClExecutor {
@@ -49,6 +63,7 @@ public:
   static folly::Future<OperationStatus> mkdir(size_t connectionId, const std::string &url);
   static folly::Future<OperationStatus> put(size_t connectionId, const std::string &url, const std::string &contents);
   static folly::Future<OperationStatus> rm(size_t connectionId, const std::string &url);
+  static folly::Future<ReadStatus> get(size_t connectionId, const std::string &path);
 };
 
 }

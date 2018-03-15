@@ -40,6 +40,10 @@ bool OperationStatus::ok() const {
   return errors.empty();
 }
 
+void OperationStatus::addError(const std::string &err) {
+  errors.push_back(err);
+}
+
 std::string errorVectorToString(const std::vector<std::string> &errors) {
   std::ostringstream ss;
   for(size_t i = 0; i < errors.size(); i++) {
@@ -222,40 +226,40 @@ private:
   folly::Promise<OpenStatus> promise;
 };
 
+template<typename IncomingStatus, typename OutgoingStatus>
 class CloseHandler : public HandlerHelper, XrdCl::ResponseHandler {
 public:
   CloseHandler() {}
 
-  folly::Future<OperationStatus> initialize(OpenStatus openStatus) {
-    folly::Future<OperationStatus> fut = promise.getFuture();
+  folly::Future<OutgoingStatus> initialize(IncomingStatus incoming) {
+    folly::Future<OutgoingStatus> fut = promise.getFuture();
 
-    if(!openStatus.ok()) {
-      setValueAndDeleteThis(promise, OperationStatus(openStatus));
+    if(!incoming.ok()) {
+      setValueAndDeleteThis(promise, OutgoingStatus(incoming));
       return fut;
     }
 
-    XrdCl::XRootDStatus status = openStatus.file->Close(this);
+    XrdCl::XRootDStatus status = incoming.file->Close(this);
     if(!status.IsOK()) {
-      setValueAndDeleteThis(promise, OperationStatus(status.ToString()));
+      incoming.addError(status.ToString());
+      setValueAndDeleteThis(promise, OutgoingStatus(incoming));
     }
 
-    file = std::move(openStatus);
+    incomingStatus = std::move(incoming);
     return fut;
   }
 
   virtual void HandleResponse(XrdCl::XRootDStatus *status, XrdCl::AnyObject *response) override {
-    OperationStatus retval;
-
     if(!status->IsOK()) {
-      retval.errors.push_back(status->ToString());
+      incomingStatus.addError(status->ToString());
     }
 
-    return finalize(promise, status, response, retval);
+    return finalize(promise, status, response, OutgoingStatus(incomingStatus));
   }
 
 private:
-  OpenStatus file;
-  folly::Promise<OperationStatus> promise;
+  IncomingStatus incomingStatus;
+  folly::Promise<OutgoingStatus> promise;
 };
 
 std::string makeURL(size_t connectionId, const std::string &path) {
@@ -277,11 +281,11 @@ folly::Future<OperationStatus> XrdClExecutor::put(size_t connectionId, const std
   );
 
   WriteHandler *writeHandler = new WriteHandler(contents);
-  CloseHandler *closeHandler = new CloseHandler();
+  CloseHandler<OpenStatus, OperationStatus> *closeHandler = new CloseHandler<OpenStatus, OperationStatus>();
 
   return openHandler->initialize()
     .then(&WriteHandler::initialize, writeHandler)
-    .then(&CloseHandler::initialize, closeHandler);
+    .then(&CloseHandler<OpenStatus, OperationStatus>::initialize, closeHandler);
 }
 
 class RmHandler : public HandlerHelper, XrdCl::ResponseHandler {
@@ -310,6 +314,106 @@ private:
   XrdCl::FileSystem fs;
   folly::Promise<OperationStatus> promise;
 };
+
+bool ReadStatus::ok() const {
+  return status.ok();
+}
+
+namespace eostest {
+
+class ReadOutcome {
+public:
+  ReadOutcome() {}
+  ReadOutcome(const OpenStatus &openStatus) {
+    readStatus.status = OperationStatus(openStatus);
+  }
+
+  void addError(const std::string &err) {
+    readStatus.status.addError(err);
+  }
+
+  bool ok() const {
+    return readStatus. ok();
+  }
+
+  ReadStatus readStatus;
+  std::unique_ptr<XrdCl::File> file;
+};
+
+}
+
+ReadStatus::ReadStatus(const ReadOutcome &outcome) {
+  *this = outcome.readStatus;
+}
+
+class ReadHandler : public HandlerHelper, XrdCl::ResponseHandler {
+public:
+  ReadHandler(size_t size = 4096) {
+    retval.readStatus.contents.resize(size);
+  }
+
+  folly::Future<ReadOutcome> initialize(OpenStatus openStatus) {
+    folly::Future<ReadOutcome> fut = promise.getFuture();
+
+    if(!openStatus.ok()) {
+      setValueAndDeleteThis(promise, ReadOutcome(openStatus));
+      return fut;
+    }
+
+    retval.file = std::move(openStatus.file);
+    XrdCl::XRootDStatus status = retval.file->Read(
+      0,
+      retval.readStatus.contents.size(),
+      (void*) retval.readStatus.contents.c_str(),
+      this
+    );
+
+    if(!status.IsOK()) {
+      retval.readStatus.status.errors.push_back(status.ToString());
+      setValueAndDeleteThis(promise, std::move(retval));
+      return fut;
+    }
+
+    return fut;
+  }
+
+  virtual void HandleResponse(XrdCl::XRootDStatus *status, XrdCl::AnyObject *response) override {
+    if(!status->IsOK()) {
+      retval.readStatus.status.errors.push_back(status->ToString());
+    }
+    else {
+      XrdCl::ChunkInfo *chunk;
+      response->Get(chunk);
+      response->Set( (int*) 0);
+      size_t bytesRead = chunk->length;
+      delete chunk;
+
+      retval.readStatus.contents.resize(bytesRead);
+    }
+
+    return finalize(promise, status, response, std::move(retval));
+  }
+
+private:
+  ReadOutcome retval;
+  folly::Promise<ReadOutcome> promise;
+};
+
+folly::Future<ReadStatus> XrdClExecutor::get(size_t connectionId, const std::string &path) {
+  OpenHandler *openHandler = new OpenHandler(
+    makeURL(connectionId, path),
+    XrdCl::OpenFlags::Read,
+    XrdCl::Access::None
+  );
+
+  ReadHandler *readHandler = new ReadHandler();
+
+  CloseHandler<ReadOutcome, ReadStatus> *closeHandler = new CloseHandler<ReadOutcome, ReadStatus>();
+
+  return openHandler->initialize()
+    .then(&ReadHandler::initialize, readHandler)
+    .then(&CloseHandler<ReadOutcome, ReadStatus>::initialize, closeHandler);
+}
 
 folly::Future<OperationStatus> XrdClExecutor::rm(size_t connectionId, const std::string &path) {
   RmHandler *rmHandler = new RmHandler(makeURL(connectionId, path));

@@ -35,6 +35,11 @@ TEST(XrdClExecutor, BasicSanity) {
   status = XrdClExecutor::put(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/f1", "adfasf").get();
   ASSERT_TRUE(status.ok());
 
+  ReadStatus rstatus = XrdClExecutor::get(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/f1").get();
+  ASSERT_TRUE(rstatus.ok());
+  ASSERT_EQ(rstatus.contents, "adfasf");
+
   status = XrdClExecutor::rm(1, "root://eospps.cern.ch///eos/user/gbitzes/eostester/f1").get();
   ASSERT_TRUE(status.ok());
+
 }
