@@ -31,10 +31,13 @@
 
 namespace eostest {
 
+class OpenStatus;
+
 class OperationStatus {
 public:
   OperationStatus(); // success
   OperationStatus(const std::string &err); // error
+  OperationStatus(const OpenStatus &openStatus); // copy any errors from openStatus
 
   bool ok() const;
   std::string toString() const;
@@ -45,6 +48,7 @@ class XrdClExecutor {
 public:
   static folly::Future<OperationStatus> mkdir(size_t connectionId, const std::string &url);
   static folly::Future<OperationStatus> put(size_t connectionId, const std::string &url, const std::string &contents);
+  static folly::Future<OperationStatus> rm(size_t connectionId, const std::string &url);
 };
 
 }

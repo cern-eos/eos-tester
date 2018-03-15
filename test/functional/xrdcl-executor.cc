@@ -25,10 +25,16 @@
 #include "XrdClExecutor.hh"
 using namespace eostest;
 
-TEST(DISABLED_XrdClExecutor, BasicSanity) {
+TEST(XrdClExecutor, BasicSanity) {
   OperationStatus status = XrdClExecutor::mkdir(1, "root://eospps.cern.ch///eos/user/gbitzes/eostester/").get();
   ASSERT_TRUE(status.ok());
 
-  XrdClExecutor::put(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/f1", "adfasf");
+  status = XrdClExecutor::rm(1, "root://eospps.cern.ch///eos/user/gbitzes/eostester/f1").get();
+  ASSERT_FALSE(status.ok());
 
+  status = XrdClExecutor::put(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/f1", "adfasf").get();
+  ASSERT_TRUE(status.ok());
+
+  status = XrdClExecutor::rm(1, "root://eospps.cern.ch///eos/user/gbitzes/eostester/f1").get();
+  ASSERT_TRUE(status.ok());
 }

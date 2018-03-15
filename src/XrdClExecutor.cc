@@ -73,6 +73,14 @@ public:
     delete this;
   }
 
+  void trivialResponseHandler(folly::Promise<OperationStatus> &promise, XrdCl::XRootDStatus *status, XrdCl::AnyObject *response) {
+    if(!status->IsOK()) {
+      return finalize(promise, status, response, OperationStatus(status->ToString()));
+    }
+
+    return finalize(promise, status, response, OperationStatus());
+  }
+
 };
 
 class MkdirHandler : public HandlerHelper, XrdCl::ResponseHandler {
@@ -93,11 +101,7 @@ public:
   }
 
   virtual void HandleResponse(XrdCl::XRootDStatus *status, XrdCl::AnyObject *response) override {
-    if(!status->IsOK()) {
-      return finalize(promise, status, response, OperationStatus(status->ToString()));
-    }
-
-    return finalize(promise, status, response, OperationStatus());
+    trivialResponseHandler(promise, status, response);
   }
 
 private:
@@ -105,6 +109,8 @@ private:
   XrdCl::FileSystem fs;
   folly::Promise<OperationStatus> promise;
 };
+
+namespace eostest {
 
 class OpenStatus {
 public:
@@ -133,6 +139,13 @@ public:
   std::vector<std::string> errors;
   std::unique_ptr<XrdCl::File> file;
 };
+
+}
+
+OperationStatus::OperationStatus(const OpenStatus &openStatus) {
+  errors = openStatus.errors;
+}
+
 
 class OpenHandler : public HandlerHelper, XrdCl::ResponseHandler {
 public:
@@ -209,6 +222,42 @@ private:
   folly::Promise<OpenStatus> promise;
 };
 
+class CloseHandler : public HandlerHelper, XrdCl::ResponseHandler {
+public:
+  CloseHandler() {}
+
+  folly::Future<OperationStatus> initialize(OpenStatus openStatus) {
+    folly::Future<OperationStatus> fut = promise.getFuture();
+
+    if(!openStatus.ok()) {
+      setValueAndDeleteThis(promise, OperationStatus(openStatus));
+      return fut;
+    }
+
+    XrdCl::XRootDStatus status = openStatus.file->Close(this);
+    if(!status.IsOK()) {
+      setValueAndDeleteThis(promise, OperationStatus(status.ToString()));
+    }
+
+    file = std::move(openStatus);
+    return fut;
+  }
+
+  virtual void HandleResponse(XrdCl::XRootDStatus *status, XrdCl::AnyObject *response) override {
+    OperationStatus retval;
+
+    if(!status->IsOK()) {
+      retval.errors.push_back(status->ToString());
+    }
+
+    return finalize(promise, status, response, retval);
+  }
+
+private:
+  OpenStatus file;
+  folly::Promise<OperationStatus> promise;
+};
+
 std::string makeURL(size_t connectionId, const std::string &path) {
   XrdCl::URL url(path);
   url.SetUserName(SSTR("t" << connectionId));
@@ -228,10 +277,41 @@ folly::Future<OperationStatus> XrdClExecutor::put(size_t connectionId, const std
   );
 
   WriteHandler *writeHandler = new WriteHandler(contents);
+  CloseHandler *closeHandler = new CloseHandler();
 
-  OpenStatus openStatus = openHandler->initialize().then(&WriteHandler::initialize, writeHandler).get();
-  std::cout << openStatus.toString() << std::endl;
+  return openHandler->initialize()
+    .then(&WriteHandler::initialize, writeHandler)
+    .then(&CloseHandler::initialize, closeHandler);
+}
 
-  folly::Promise<OperationStatus> asdf;
-  return asdf.getFuture();
+class RmHandler : public HandlerHelper, XrdCl::ResponseHandler {
+public:
+  RmHandler(const XrdCl::URL &ur) : url(ur), fs(ur.GetURL()) { }
+  virtual ~RmHandler() {}
+
+  folly::Future<OperationStatus> initialize() {
+    folly::Future<OperationStatus> fut = promise.getFuture();
+
+    XrdCl::XRootDStatus status = fs.Rm(url.GetPath(), this);
+    if(!status.IsOK()) {
+      setValueAndDeleteThis(promise, OperationStatus(status.ToString()));
+      return fut;
+    }
+
+    return fut;
+  }
+
+  virtual void HandleResponse(XrdCl::XRootDStatus *status, XrdCl::AnyObject *response) override {
+    trivialResponseHandler(promise, status, response);
+  }
+
+private:
+  XrdCl::URL url;
+  XrdCl::FileSystem fs;
+  folly::Promise<OperationStatus> promise;
+};
+
+folly::Future<OperationStatus> XrdClExecutor::rm(size_t connectionId, const std::string &path) {
+  RmHandler *rmHandler = new RmHandler(makeURL(connectionId, path));
+  return rmHandler->initialize();
 }
