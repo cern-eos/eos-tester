@@ -85,6 +85,5 @@ void TreeBuilder::main(ThreadAssistant &assistant) {
   }
 
 out:
-
   promise.setValue(std::move(accumulator));
 }

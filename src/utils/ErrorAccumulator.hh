@@ -32,6 +32,7 @@ namespace eostest {
 class ErrorAccumulator {
 public:
   ErrorAccumulator();
+  ErrorAccumulator(const std::string &err);
   void addError(const std::string &err);
   bool ok() const;
   void absorbErrors(const ErrorAccumulator &acc);

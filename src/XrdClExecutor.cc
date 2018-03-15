@@ -387,3 +387,53 @@ folly::Future<OperationStatus> XrdClExecutor::rm(size_t connectionId, const std:
   RmHandler *rmHandler = new RmHandler(makeURL(connectionId, path));
   return rmHandler->initialize();
 }
+
+class DirListHandler : public HandlerHelper, XrdCl::ResponseHandler {
+public:
+  DirListHandler(const XrdCl::URL &ur) : url(ur), fs(url.GetURL()) {}
+
+  folly::Future<DirListStatus> initialize() {
+    folly::Future<DirListStatus> fut = promise.getFuture();
+
+    XrdCl::XRootDStatus status = fs.DirList(
+      url.GetPath(),
+      XrdCl::DirListFlags::Stat,
+      this
+    );
+
+    if(!status.IsOK()) {
+      setValueAndDeleteThis(promise, DirListStatus(status.ToString()));
+    }
+
+    return fut;
+  }
+
+  virtual void HandleResponse(XrdCl::XRootDStatus *status, XrdCl::AnyObject *response) override {
+    if(!status->IsOK()) {
+      return finalize(promise, status, response, DirListStatus(status->ToString()));
+    }
+
+    // Extract DirectoryList out of response
+    XrdCl::DirectoryList *dirlist;
+    response->Get(dirlist);
+    response->Set( (int*) 0);
+
+    DirListStatus retval;
+    retval.contents.reset(dirlist);
+
+    return finalize(promise, status, response, std::move(retval));
+  }
+
+private:
+  XrdCl::URL url;
+  XrdCl::FileSystem fs;
+  folly::Promise<DirListStatus> promise;
+};
+
+folly::Future<DirListStatus> XrdClExecutor::dirList(size_t connectionId, const std::string &path) {
+  DirListHandler *handler = new DirListHandler(
+    makeURL(connectionId, path)
+  );
+
+  return handler->initialize();
+}

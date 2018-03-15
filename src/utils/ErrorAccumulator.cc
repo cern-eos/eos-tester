@@ -28,6 +28,10 @@ using namespace eostest;
 
 ErrorAccumulator::ErrorAccumulator() {}
 
+ErrorAccumulator::ErrorAccumulator(const std::string &err) {
+  addError(err);
+}
+
 void ErrorAccumulator::addError(const std::string &err) {
   errors.push_back(err);
 }

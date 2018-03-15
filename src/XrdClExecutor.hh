@@ -29,6 +29,7 @@
 #include <string>
 #include "utils/ErrorAccumulator.hh"
 #include <folly/futures/Future.h>
+#include <XrdCl/XrdClFileSystem.hh>
 
 namespace eostest {
 
@@ -40,12 +41,6 @@ public:
   OperationStatus(); // success
   OperationStatus(const std::string &err); // error
   OperationStatus(const OpenStatus &openStatus); // copy any errors from openStatus
-
-  // bool ok() const;
-  // std::string toString() const;
-  //
-  // void addError(const std::string &err);
-  // std::vector<std::string> errors;
 };
 
 class ReadStatus {
@@ -59,12 +54,19 @@ public:
   bool ok() const;
 };
 
+class DirListStatus : public ErrorAccumulator {
+public:
+  using ErrorAccumulator::ErrorAccumulator;
+  std::unique_ptr<XrdCl::DirectoryList> contents;
+};
+
 class XrdClExecutor {
 public:
   static folly::Future<OperationStatus> mkdir(size_t connectionId, const std::string &url);
   static folly::Future<OperationStatus> put(size_t connectionId, const std::string &url, const std::string &contents);
   static folly::Future<OperationStatus> rm(size_t connectionId, const std::string &url);
   static folly::Future<ReadStatus> get(size_t connectionId, const std::string &path);
+  static folly::Future<DirListStatus> dirList(size_t connectionId, const std::string &path);
 };
 
 }

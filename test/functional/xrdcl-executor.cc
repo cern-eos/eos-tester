@@ -27,20 +27,26 @@
 using namespace eostest;
 
 TEST(XrdClExecutor, BasicSanity) {
-  OperationStatus status = XrdClExecutor::mkdir(1, "root://eospps.cern.ch///eos/user/gbitzes/eostester/").get();
+  OperationStatus status = XrdClExecutor::mkdir(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/sanity/").get();
   ASSERT_TRUE(status.ok());
 
-  status = XrdClExecutor::rm(1, "root://eospps.cern.ch///eos/user/gbitzes/eostester/f1").get();
+  status = XrdClExecutor::rm(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/sanity/f1").get();
   ASSERT_FALSE(status.ok());
 
-  status = XrdClExecutor::put(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/f1", "adfasf").get();
+  status = XrdClExecutor::put(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/sanity/f1", "adfasf").get();
   ASSERT_TRUE(status.ok());
 
-  ReadStatus rstatus = XrdClExecutor::get(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/f1").get();
+  ReadStatus rstatus = XrdClExecutor::get(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/sanity/f1").get();
   ASSERT_TRUE(rstatus.ok());
   ASSERT_EQ(rstatus.contents, "adfasf");
 
-  status = XrdClExecutor::rm(1, "root://eospps.cern.ch///eos/user/gbitzes/eostester/f1").get();
+  DirListStatus lstatus = XrdClExecutor::dirList(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/sanity").get();
+  ASSERT_TRUE(lstatus.ok());
+  ASSERT_EQ(lstatus.contents->GetSize(), 1u);
+  ASSERT_EQ(lstatus.contents->At(0)->GetName(), "f1");
+  ASSERT_FALSE(lstatus.contents->At(0)->GetStatInfo()->TestFlags(XrdCl::StatInfo::IsDir));
+
+  status = XrdClExecutor::rm(1, "root://eospps.cern.ch///eos/user/gbitzes/eostester/sanity/f1").get();
   ASSERT_TRUE(status.ok());
 }
 

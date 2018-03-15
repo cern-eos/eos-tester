@@ -6,9 +6,12 @@ set(GTEST_BINARY_DIR "${CMAKE_BINARY_DIR}/deps/googletest/googletest")
 add_subdirectory("${GTEST}" "${GTEST_BINARY_DIR}")
 
 #-------------------------------------------------------------------------------
-# Include src/
+# Add inclues
 #-------------------------------------------------------------------------------
-include_directories(../src)
+include_directories(
+  ../src
+  ${XROOTD_INCLUDE_DIR}
+)
 
 #-------------------------------------------------------------------------------
 # Testception
