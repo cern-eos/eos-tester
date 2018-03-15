@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: xrdcl-executor.cc
+// File: ErrorAccumulator.cc
 // Author: Georgios Bitzes - CERN
 // ----------------------------------------------------------------------
 
@@ -21,42 +21,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#include <gtest/gtest.h>
-#include "XrdClExecutor.hh"
-#include "testcases/TreeBuilder.hh"
+#include <sstream>
+#include "../Macros.hh"
+#include "ErrorAccumulator.hh"
 using namespace eostest;
 
-TEST(XrdClExecutor, BasicSanity) {
-  OperationStatus status = XrdClExecutor::mkdir(1, "root://eospps.cern.ch///eos/user/gbitzes/eostester/").get();
-  ASSERT_TRUE(status.ok());
+ErrorAccumulator::ErrorAccumulator() {}
 
-  status = XrdClExecutor::rm(1, "root://eospps.cern.ch///eos/user/gbitzes/eostester/f1").get();
-  ASSERT_FALSE(status.ok());
-
-  status = XrdClExecutor::put(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/f1", "adfasf").get();
-  ASSERT_TRUE(status.ok());
-
-  ReadStatus rstatus = XrdClExecutor::get(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/f1").get();
-  ASSERT_TRUE(rstatus.ok());
-  ASSERT_EQ(rstatus.contents, "adfasf");
-
-  status = XrdClExecutor::rm(1, "root://eospps.cern.ch///eos/user/gbitzes/eostester/f1").get();
-  ASSERT_TRUE(status.ok());
+void ErrorAccumulator::addError(const std::string &err) {
+  errors.push_back(err);
 }
 
-TEST(TreeBuilder, BasicSanity) {
-  TreeBuilder::Options opts;
-  opts.baseUrl = "root://eospps.cern.ch//eos/user/gbitzes/eostester/tree";
-  opts.seed = 42;
-  opts.depth = 5;
-  opts.files = 100;
+bool ErrorAccumulator::ok() const {
+  return errors.empty();
+}
 
-  TreeBuilder builder(opts);
-
-  ErrorAccumulator acc = builder.initialize().get();
-  if(!acc.ok()) {
-    std::cout << acc.toString() << std::endl;
+std::string ErrorAccumulator::toString() const {
+  std::ostringstream ss;
+  for(size_t i = 0; i < errors.size(); i++) {
+    ss << "- " << errors[i] << std::endl;
   }
 
-  ASSERT_TRUE(acc.ok());
+  return ss.str();
+}
+
+void ErrorAccumulator::absorbErrors(const ErrorAccumulator &acc) {
+  for(size_t i = 0; i < acc.errors.size(); i++) {
+    errors.push_back(SSTR("    " << acc.errors[i]));
+  }
 }

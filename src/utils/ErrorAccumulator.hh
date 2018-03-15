@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: xrdcl-executor.cc
+// File: ErrorAccumulator.hh
 // Author: Georgios Bitzes - CERN
 // ----------------------------------------------------------------------
 
@@ -21,42 +21,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#include <gtest/gtest.h>
-#include "XrdClExecutor.hh"
-#include "testcases/TreeBuilder.hh"
-using namespace eostest;
+#ifndef EOSTESTER_ERROR_ACCUMULATOR_H
+#define EOSTESTER_ERROR_ACCUMULATOR_H
 
-TEST(XrdClExecutor, BasicSanity) {
-  OperationStatus status = XrdClExecutor::mkdir(1, "root://eospps.cern.ch///eos/user/gbitzes/eostester/").get();
-  ASSERT_TRUE(status.ok());
+#include <vector>
+#include <string>
 
-  status = XrdClExecutor::rm(1, "root://eospps.cern.ch///eos/user/gbitzes/eostester/f1").get();
-  ASSERT_FALSE(status.ok());
+namespace eostest {
 
-  status = XrdClExecutor::put(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/f1", "adfasf").get();
-  ASSERT_TRUE(status.ok());
+class ErrorAccumulator {
+public:
+  ErrorAccumulator();
+  void addError(const std::string &err);
+  bool ok() const;
+  void absorbErrors(const ErrorAccumulator &acc);
+  std::string toString() const;
 
-  ReadStatus rstatus = XrdClExecutor::get(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/f1").get();
-  ASSERT_TRUE(rstatus.ok());
-  ASSERT_EQ(rstatus.contents, "adfasf");
+// private:
+  std::vector<std::string> errors;
+};
 
-  status = XrdClExecutor::rm(1, "root://eospps.cern.ch///eos/user/gbitzes/eostester/f1").get();
-  ASSERT_TRUE(status.ok());
 }
 
-TEST(TreeBuilder, BasicSanity) {
-  TreeBuilder::Options opts;
-  opts.baseUrl = "root://eospps.cern.ch//eos/user/gbitzes/eostester/tree";
-  opts.seed = 42;
-  opts.depth = 5;
-  opts.files = 100;
-
-  TreeBuilder builder(opts);
-
-  ErrorAccumulator acc = builder.initialize().get();
-  if(!acc.ok()) {
-    std::cout << acc.toString() << std::endl;
-  }
-
-  ASSERT_TRUE(acc.ok());
-}
+#endif

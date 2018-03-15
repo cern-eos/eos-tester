@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: xrdcl-executor.cc
+// File: TreeBuilder.hh
 // Author: Georgios Bitzes - CERN
 // ----------------------------------------------------------------------
 
@@ -21,42 +21,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#include <gtest/gtest.h>
-#include "XrdClExecutor.hh"
-#include "testcases/TreeBuilder.hh"
-using namespace eostest;
+#ifndef EOSTESTER_TESTCASE_TREE_BUILDER_H
+#define EOSTESTER_TESTCASE_TREE_BUILDER_H
 
-TEST(XrdClExecutor, BasicSanity) {
-  OperationStatus status = XrdClExecutor::mkdir(1, "root://eospps.cern.ch///eos/user/gbitzes/eostester/").get();
-  ASSERT_TRUE(status.ok());
+#include <string>
+#include <folly/futures/Future.h>
+#include "../utils/AssistedThread.hh"
+#include "../utils/ErrorAccumulator.hh"
 
-  status = XrdClExecutor::rm(1, "root://eospps.cern.ch///eos/user/gbitzes/eostester/f1").get();
-  ASSERT_FALSE(status.ok());
+namespace eostest {
 
-  status = XrdClExecutor::put(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/f1", "adfasf").get();
-  ASSERT_TRUE(status.ok());
+class TreeBuilder {
+public:
+  struct Options {
+    std::string baseUrl;
+    int32_t seed;
+    size_t depth;
+    size_t files; // total number of files, including manifests
+  };
 
-  ReadStatus rstatus = XrdClExecutor::get(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/f1").get();
-  ASSERT_TRUE(rstatus.ok());
-  ASSERT_EQ(rstatus.contents, "adfasf");
+  TreeBuilder(const Options &opts);
+  folly::Future<ErrorAccumulator> initialize();
+  void main(ThreadAssistant &assistant);
 
-  status = XrdClExecutor::rm(1, "root://eospps.cern.ch///eos/user/gbitzes/eostester/f1").get();
-  ASSERT_TRUE(status.ok());
+private:
+  Options options;
+  folly::Promise<ErrorAccumulator> promise;
+  AssistedThread thread;
+};
+
 }
 
-TEST(TreeBuilder, BasicSanity) {
-  TreeBuilder::Options opts;
-  opts.baseUrl = "root://eospps.cern.ch//eos/user/gbitzes/eostester/tree";
-  opts.seed = 42;
-  opts.depth = 5;
-  opts.files = 100;
-
-  TreeBuilder builder(opts);
-
-  ErrorAccumulator acc = builder.initialize().get();
-  if(!acc.ok()) {
-    std::cout << acc.toString() << std::endl;
-  }
-
-  ASSERT_TRUE(acc.ok());
-}
+#endif

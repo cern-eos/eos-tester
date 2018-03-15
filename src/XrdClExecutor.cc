@@ -33,28 +33,7 @@ using namespace eostest;
 OperationStatus::OperationStatus() { }
 
 OperationStatus::OperationStatus(const std::string &err) {
-  errors.push_back(err);
-}
-
-bool OperationStatus::ok() const {
-  return errors.empty();
-}
-
-void OperationStatus::addError(const std::string &err) {
-  errors.push_back(err);
-}
-
-std::string errorVectorToString(const std::vector<std::string> &errors) {
-  std::ostringstream ss;
-  for(size_t i = 0; i < errors.size(); i++) {
-    ss << "Error #" << i+1 << ": " << errors[i] << std::endl;
-  }
-
-  return ss.str();
-}
-
-std::string OperationStatus::toString() const {
-  return errorVectorToString(errors);
+  addError(err);
 }
 
 class HandlerHelper {
@@ -116,10 +95,10 @@ private:
 
 namespace eostest {
 
-class OpenStatus {
+class OpenStatus : public ErrorAccumulator {
 public:
   OpenStatus(const std::string &err) {
-    errors.emplace_back(err);
+    addError(err);
   }
 
   OpenStatus(std::unique_ptr<XrdCl::File> f)
@@ -128,19 +107,9 @@ public:
   OpenStatus() {}
 
   bool ok() const {
-    return errors.empty() && file;
+    return ErrorAccumulator::ok() && file;
   }
 
-  std::string toString() const {
-    return errorVectorToString(errors);
-  }
-
-  void addError(const std::string &err) {
-    file.reset();
-    errors.emplace_back(err);
-  }
-
-  std::vector<std::string> errors;
   std::unique_ptr<XrdCl::File> file;
 };
 
@@ -149,7 +118,6 @@ public:
 OperationStatus::OperationStatus(const OpenStatus &openStatus) {
   errors = openStatus.errors;
 }
-
 
 class OpenHandler : public HandlerHelper, XrdCl::ResponseHandler {
 public:
@@ -369,7 +337,7 @@ public:
     );
 
     if(!status.IsOK()) {
-      retval.readStatus.status.errors.push_back(status.ToString());
+      retval.readStatus.status.addError(status.ToString());
       setValueAndDeleteThis(promise, std::move(retval));
       return fut;
     }
@@ -379,7 +347,7 @@ public:
 
   virtual void HandleResponse(XrdCl::XRootDStatus *status, XrdCl::AnyObject *response) override {
     if(!status->IsOK()) {
-      retval.readStatus.status.errors.push_back(status->ToString());
+      retval.readStatus.status.addError(status->ToString());
     }
     else {
       XrdCl::ChunkInfo *chunk;

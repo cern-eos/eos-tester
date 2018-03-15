@@ -27,6 +27,7 @@
 #include <future>
 #include <vector>
 #include <string>
+#include "utils/ErrorAccumulator.hh"
 #include <folly/futures/Future.h>
 
 namespace eostest {
@@ -34,17 +35,17 @@ namespace eostest {
 class OpenStatus;
 class ReadOutcome;
 
-class OperationStatus {
+class OperationStatus : public ErrorAccumulator {
 public:
   OperationStatus(); // success
   OperationStatus(const std::string &err); // error
   OperationStatus(const OpenStatus &openStatus); // copy any errors from openStatus
 
-  bool ok() const;
-  std::string toString() const;
-
-  void addError(const std::string &err);
-  std::vector<std::string> errors;
+  // bool ok() const;
+  // std::string toString() const;
+  //
+  // void addError(const std::string &err);
+  // std::vector<std::string> errors;
 };
 
 class ReadStatus {
