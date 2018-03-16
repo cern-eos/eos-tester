@@ -60,6 +60,17 @@ ManifestHolder parseManifest(ReadStatus status, std::string path) {
   return holder;
 }
 
+ErrorAccumulator parseFile(ReadStatus status, std::string path) {
+  ErrorAccumulator accu;
+
+  if(!status.ok()) {
+    accu.absorbErrors(status.status);
+    return accu;
+  }
+
+  return SelfCheckedFile::validate(status.contents, XrdCl::URL(path).GetPath());
+}
+
 folly::Future<ManifestHolder> fetchManifest(std::string path) {
   folly::Future<ReadStatus> readStatus = XrdClExecutor::get(1, path);
   return readStatus.then(std::bind(parseManifest, std::placeholders::_1, XrdCl::URL(path).GetPath()));
@@ -80,12 +91,37 @@ ManifestHolder validateManifest(std::tuple<ManifestHolder, DirListStatus> tup) {
   return manifestHolder;
 }
 
+folly::Future<ErrorAccumulator> validateSingleFile(const std::string &path) {
+  folly::Future<ReadStatus> readStatus = XrdClExecutor::get(1, path);
+  return readStatus.then(std::bind(parseFile, std::placeholders::_1, path));
+}
+
+ManifestHolder combineErrors(ManifestHolder holder, std::vector<ErrorAccumulator> errors) {
+  for(size_t i = 0; i < errors.size(); i++) {
+    holder.absorbErrors(errors[i]);
+  }
+
+  return holder;
+}
+
+folly::Future<ManifestHolder> validateContainedFiles(ManifestHolder holder, std::string path) {
+  std::vector<folly::Future<ErrorAccumulator>> accus;
+
+  std::string file;
+  while(holder.manifest.popFile(file)) {
+    accus.emplace_back(validateSingleFile(SSTR(path << "/" << file)));
+  }
+
+  return folly::collect(accus).then(std::bind(combineErrors, std::move(holder), std::placeholders::_1));
+}
+
 folly::Future<ManifestHolder> validateSingleDirectory(const std::string &path) {
   folly::Future<DirListStatus> dirList = XrdClExecutor::dirList(1, path);
   folly::Future<ManifestHolder> holder = fetchManifest(SSTR(path << "/MANIFEST"));
 
   return folly::collect(holder, dirList)
-    .then(validateManifest);
+    .then(validateManifest)
+    .then(std::bind(validateContainedFiles, std::placeholders::_1, path));
 }
 
 eostest::TreeLevel TreeValidator::insertLevel(ManifestHolder manifest) {
