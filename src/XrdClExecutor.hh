@@ -66,7 +66,8 @@ public:
   static folly::Future<OperationStatus> put(size_t connectionId, const std::string &url, const std::string &contents);
   static folly::Future<OperationStatus> rm(size_t connectionId, const std::string &url);
   static folly::Future<ReadStatus> get(size_t connectionId, const std::string &path);
-  static folly::Future<DirListStatus> dirList(size_t connectionId, const std::string &path);
+  static folly::Future<DirListStatus> dirList(size_t connectionId, const std::string &url);
+  static folly::Future<OperationStatus> rmdir(size_t connectionId, const std::string &url);
 };
 
 }

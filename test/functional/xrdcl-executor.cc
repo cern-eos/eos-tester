@@ -24,6 +24,7 @@
 #include <gtest/gtest.h>
 #include "XrdClExecutor.hh"
 #include "testcases/TreeBuilder.hh"
+#include "testcases/TreeValidator.hh"
 using namespace eostest;
 
 TEST(XrdClExecutor, BasicSanity) {
@@ -50,9 +51,11 @@ TEST(XrdClExecutor, BasicSanity) {
   ASSERT_TRUE(status.ok());
 }
 
-TEST(TreeBuilder, BasicSanity) {
+TEST(TreeValidator, BasicSanity) {
+  ASSERT_EQ(system("gfal-rm -r root://eospps.cern.ch///eos/user/gbitzes/eostester/tree-simple-2/"), 0);
+
   TreeBuilder::Options opts;
-  opts.baseUrl = "root://eospps.cern.ch//eos/user/gbitzes/eostester/tree";
+  opts.baseUrl = "root://eospps.cern.ch//eos/user/gbitzes/eostester/tree-simple-2";
   opts.seed = 42;
   opts.depth = 5;
   opts.files = 100;
@@ -60,9 +63,11 @@ TEST(TreeBuilder, BasicSanity) {
   TreeBuilder builder(opts);
 
   ErrorAccumulator acc = builder.initialize().get();
-  if(!acc.ok()) {
-    std::cout << acc.toString() << std::endl;
-  }
+  ASSERT_TRUE(acc.ok()) << acc.toString();
 
-  ASSERT_TRUE(acc.ok());
+  std::cout << "Construction OK, starting validation..." << std::endl;
+
+  TreeValidator validator(opts.baseUrl);
+  acc = validator.initialize().get();
+  ASSERT_TRUE(acc.ok()) << acc.toString();
 }

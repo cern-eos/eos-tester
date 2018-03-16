@@ -22,6 +22,7 @@
  ************************************************************************/
 
 #include <queue>
+#include <iostream>
 #include <XrdCl/XrdClFile.hh>
 #include "TreeBuilder.hh"
 #include "../XrdClExecutor.hh"
@@ -70,6 +71,10 @@ void TreeBuilder::main(ThreadAssistant &assistant) {
     while(queue.size() <= pipelineLength) {
       HierarchyEntry entry;
       if(!hierarchyBuilder.next(entry)) {
+        while(!queue.empty()) {
+          accumulator.absorbErrors(queue.front().get());
+          queue.pop();
+        }
         goto out;
       }
 

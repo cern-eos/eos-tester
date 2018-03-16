@@ -7,6 +7,7 @@ include_directories(
 #-------------------------------------------------------------------------------
 add_library(eostester STATIC
   testcases/TreeBuilder.cc                               testcases/TreeBuilder.hh
+  testcases/TreeValidator.cc                             testcases/TreeValidator.hh
                                                          utils/AssistedThread.hh
   utils/ErrorAccumulator.cc                              utils/ErrorAccumulator.hh
   HashCalculator.cc                                      HashCalculator.hh

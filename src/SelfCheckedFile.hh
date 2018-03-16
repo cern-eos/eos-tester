@@ -25,6 +25,7 @@
 #define EOSTESTER_SELF_CHECKED_FILE_H
 
 #include <string>
+#include "utils/ErrorAccumulator.hh"
 
 namespace eostest {
 
@@ -42,6 +43,8 @@ public:
   std::string getRandomBytes() const;
   bool operator==(const SelfCheckedFile &rhs) const;
   void clear();
+
+  static ErrorAccumulator validate(std::string contents, std::string expectedFilename);
 
 private:
   std::string filename;

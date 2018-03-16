@@ -104,5 +104,17 @@ std::string SelfCheckedFile::getRandomBytes() const {
 
 bool SelfCheckedFile::operator==(const SelfCheckedFile &rhs) const {
   return filename == rhs.filename && randomBytes == rhs.randomBytes;
+}
 
+ErrorAccumulator SelfCheckedFile::validate(std::string fileContents, std::string expectedFilename) {
+  SelfCheckedFile scf;
+  if(!scf.parse(fileContents)) {
+    return ErrorAccumulator(SSTR("Could not parse self-checked-file contents: " << expectedFilename));
+  }
+
+  if(scf.getFilename() != expectedFilename) {
+    return ErrorAccumulator(SSTR("Expected self-checked-file path " << expectedFilename << ", received " << scf.getFilename()));
+  }
+
+  return ErrorAccumulator();
 }

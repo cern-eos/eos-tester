@@ -32,10 +32,11 @@ using namespace eostest;
 HierarchyBuilder::HierarchyBuilder(const HierarchyConstructionOptions &opt)
 : options(opt), generator(options.seed) {
 
-  insertNode(options.base);
+  options.files -= 1; // take top-level MANIFEST into account
+  insertNode(options.base, 0);
 }
 
-void HierarchyBuilder::insertNode(const std::string &path) {
+void HierarchyBuilder::insertNode(const std::string &path, size_t depth) {
   stack.emplace(path);
 
   // Roll dice to decide how many subdirs and files to insert
@@ -46,9 +47,14 @@ void HierarchyBuilder::insertNode(const std::string &path) {
   files = std::min(options.files, files);
   options.files -= files;
 
-  for(size_t i = 0; i < files - 1; i++) {
+  for(size_t i = 0; i < files; i++) {
     stack.top().manifest.addFile(getRandomAlphanumericBytes(5, generator));
   }
+
+  if(depth >= options.depth) return;
+
+  subdirs = std::min(options.files, subdirs);
+  options.files -= subdirs;
 
   for(size_t i = 0; i < subdirs; i++) {
     stack.top().manifest.addSubdir(getRandomAlphanumericBytes(5, generator));
@@ -79,17 +85,15 @@ bool HierarchyBuilder::next(HierarchyEntry &result) {
       return true;
     }
 
-    // No more files, should we add next directory?
-    if(stack.size() <= options.depth && options.files >= 1) {
-      std::string nextDir;
-      if(stack.top().manifest.popSubdir(nextDir)) {
-        result.fullPath = SSTR(stack.top().path << "/" << nextDir);
-        result.contents = "";
-        result.dir = true;
+    // No more files, add next directory
+    std::string nextDir;
+    if(stack.top().manifest.popSubdir(nextDir)) {
+      result.fullPath = SSTR(stack.top().path << "/" << nextDir);
+      result.contents = "";
+      result.dir = true;
 
-        insertNode(result.fullPath);
-        return true;
-      }
+      insertNode(result.fullPath, stack.size());
+      return true;
     }
 
     // Nope, pop

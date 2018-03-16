@@ -51,7 +51,7 @@ public:
   bool next(HierarchyEntry &result);
 
 private:
-  void insertNode(const std::string &path);
+  void insertNode(const std::string &path, size_t depth);
   std::string getRandomFileContents();
 
   HierarchyConstructionOptions options;

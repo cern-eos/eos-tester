@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: Manifest.hh
+// File: TreeValidator.hh
 // Author: Georgios Bitzes - CERN
 // ----------------------------------------------------------------------
 
@@ -21,51 +21,38 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#ifndef EOSTESTER_MANIFEST_H
-#define EOSTESTER_MANIFEST_H
-
-#include <set>
-#include <string>
-
-namespace XrdCl {
-  class DirectoryList;
-}
+#include <folly/futures/Future.h>
+#include "utils/ErrorAccumulator.hh"
+#include "utils/AssistedThread.hh"
+#include "Manifest.hh"
 
 namespace eostest {
 
-class Manifest {
+struct ManifestHolder : public ErrorAccumulator {
+  Manifest manifest;
+};
+
+struct TreeLevel {
+  TreeLevel(ManifestHolder &&holder) : manifest(std::move(holder)) {}
+
+  ManifestHolder manifest;
+  std::deque<folly::Future<ManifestHolder>> unexpandedChildren;
+};
+
+
+class TreeValidator {
 public:
-  Manifest();
-  Manifest(const std::string &filename);
+  TreeValidator(const std::string &url);
+  folly::Future<ErrorAccumulator> initialize();
+  void main(ThreadAssistant &assistant);
 
-  std::string toString() const;
-  std::string toStringWithoutChecksum() const;
-  std::string checksum() const;
-  bool fromString(const std::string &filename, std::string &error);
-
-  void addFile(const std::string &file);
-  void addSubdir(const std::string &subdir);
-
-  bool popFile(std::string &file);
-  bool popSubdir(std::string &subdir);
-  std::string getFilename() const;
-
-  void clear();
-  bool parse(const std::string &contents);
-
-  std::set<std::string>& getDirectories();
-  std::set<std::string>& getFiles();
-
-  bool crossCheckDirlist(XrdCl::DirectoryList &dirlist);
 
 private:
-  bool parseList(const std::string &contents, size_t& index, bool dir);
+  std::string url;
+  folly::Promise<ErrorAccumulator> promise;
+  AssistedThread thread;
 
-  std::string filename;
-  std::set<std::string> directories;
-  std::set<std::string> files;
+  TreeLevel insertLevel(ManifestHolder manifest);
 };
 
 }
-
-#endif

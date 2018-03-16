@@ -23,6 +23,9 @@
 
 #include <sstream>
 #include <iostream>
+
+#include <XrdCl/XrdClXRootDResponses.hh>
+
 #include "Manifest.hh"
 #include "HashCalculator.hh"
 #include "Utils.hh"
@@ -155,4 +158,26 @@ std::set<std::string>& Manifest::getDirectories() {
 
 std::set<std::string>& Manifest::getFiles() {
   return files;
+}
+
+bool Manifest::crossCheckDirlist(XrdCl::DirectoryList& dirlist) {
+  size_t directoryCount = 0;
+  size_t fileCount = 0;
+
+  for(size_t i = 0; i < dirlist.GetSize(); i++) {
+    // Directory?
+    if(dirlist.At(i)->GetStatInfo()->TestFlags(XrdCl::StatInfo::IsDir)) {
+      directoryCount++;
+      if(directories.count(dirlist.At(i)->GetName()) == 0) return false;
+    }
+    else {
+      // File
+      fileCount++;
+      if(files.count(dirlist.At(i)->GetName()) == 0) return false;
+    }
+  }
+
+  if(directories.size() != directoryCount) return false;
+  if(files.size() != fileCount) return false;
+  return true;
 }

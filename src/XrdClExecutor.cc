@@ -437,3 +437,40 @@ folly::Future<DirListStatus> XrdClExecutor::dirList(size_t connectionId, const s
 
   return handler->initialize();
 }
+
+class RmdirHandler : public HandlerHelper, XrdCl::ResponseHandler {
+public:
+  RmdirHandler(const std::string &path)
+  : url(path), fs(url.GetURL()) {
+
+  }
+
+  folly::Future<OperationStatus> initialize() {
+    folly::Future<OperationStatus> fut = promise.getFuture();
+
+    XrdCl::XRootDStatus status = fs.RmDir(
+      url.GetPath(),
+      this
+    );
+
+    if(!status.IsOK()) {
+      setValueAndDeleteThis(promise, OperationStatus(status.ToString()));
+    }
+
+    return fut;
+  }
+
+  virtual void HandleResponse(XrdCl::XRootDStatus *status, XrdCl::AnyObject *response) override {
+    trivialResponseHandler(promise, status, response);
+  }
+
+private:
+  XrdCl::URL url;
+  XrdCl::FileSystem fs;
+  folly::Promise<OperationStatus> promise;
+};
+
+folly::Future<OperationStatus> XrdClExecutor::rmdir(size_t connectionId, const std::string &url) {
+  RmdirHandler *handler = new RmdirHandler(url);
+  return handler->initialize();
+}
