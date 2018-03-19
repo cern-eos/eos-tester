@@ -26,6 +26,9 @@
 #include <rang.hpp>
 #include <CLI11.hpp>
 
+#include "utils/ProgressTracker.hh"
+#include "utils/ProgressTicker.hh"
+
 #include "testcases/TreeBuilder.hh"
 #include "testcases/TreeValidator.hh"
 
@@ -69,8 +72,11 @@ int main(int argc, char **argv) {
   }
 
   if(*buildOpt) {
+    ProgressTracker tracker(builderOpts.files);
+    ProgressTicker ticker(tracker);
+
     builderOpts.baseUrl = targetPath;
-    TreeBuilder builder(builderOpts);
+    TreeBuilder builder(builderOpts, &tracker);
 
     ErrorAccumulator accu = builder.initialize().get();
     if(!accu.ok()) {

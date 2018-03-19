@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: TreeBuilder.hh
+// File: ProgressTicker.hh
 // Author: Georgios Bitzes - CERN
 // ----------------------------------------------------------------------
 
@@ -21,36 +21,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#ifndef EOSTESTER_TESTCASE_TREE_BUILDER_H
-#define EOSTESTER_TESTCASE_TREE_BUILDER_H
+#ifndef EOSTESTER_PROGRESS_TICKER_H
+#define EOSTESTER_PROGRESS_TICKER_H
 
-#include <string>
-#include <folly/futures/Future.h>
-#include "../utils/AssistedThread.hh"
-#include "../utils/ErrorAccumulator.hh"
+#include "utils/AssistedThread.hh"
 
 namespace eostest {
 
 class ProgressTracker;
 
-class TreeBuilder {
+class ProgressTicker {
 public:
-  struct Options {
-    std::string baseUrl;
-    int32_t seed = 42;
-    size_t depth = 10;
-    size_t files = 100; // total number of files, including manifests
-  };
+  ProgressTicker(ProgressTracker &tracker);
+  ~ProgressTicker();
 
-  TreeBuilder(const Options &opts, ProgressTracker *tracker = nullptr);
-  folly::Future<ErrorAccumulator> initialize();
   void main(ThreadAssistant &assistant);
 
 private:
-  Options options;
-  folly::Promise<ErrorAccumulator> promise;
   AssistedThread thread;
-  ProgressTracker *tracker = nullptr;
+  ProgressTracker &tracker;
 };
 
 }

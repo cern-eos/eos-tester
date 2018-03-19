@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: TreeBuilder.hh
+// File: ProgressTracker.cc
 // Author: Georgios Bitzes - CERN
 // ----------------------------------------------------------------------
 
@@ -21,38 +21,46 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#ifndef EOSTESTER_TESTCASE_TREE_BUILDER_H
-#define EOSTESTER_TESTCASE_TREE_BUILDER_H
+#include "ProgressTracker.hh"
+#include "Macros.hh"
+using namespace eostest;
 
-#include <string>
-#include <folly/futures/Future.h>
-#include "../utils/AssistedThread.hh"
-#include "../utils/ErrorAccumulator.hh"
+ProgressTracker::ProgressTracker(int32_t ops) : total(ops) {
+  eost_assert(total >= 0);
+}
+ProgressTracker::~ProgressTracker() {}
 
-namespace eostest {
-
-class ProgressTracker;
-
-class TreeBuilder {
-public:
-  struct Options {
-    std::string baseUrl;
-    int32_t seed = 42;
-    size_t depth = 10;
-    size_t files = 100; // total number of files, including manifests
-  };
-
-  TreeBuilder(const Options &opts, ProgressTracker *tracker = nullptr);
-  folly::Future<ErrorAccumulator> initialize();
-  void main(ThreadAssistant &assistant);
-
-private:
-  Options options;
-  folly::Promise<ErrorAccumulator> promise;
-  AssistedThread thread;
-  ProgressTracker *tracker = nullptr;
-};
-
+void ProgressTracker::addInFlight() {
+  inFlight++;
+  eost_assert(inFlight <= total);
 }
 
-#endif
+void ProgressTracker::addSuccessful() {
+  eost_assert(inFlight >= 1);
+
+  successful++;
+  inFlight--;
+}
+
+void ProgressTracker::addFailed() {
+  eost_assert(inFlight >= 1);
+
+  failed++;
+  inFlight--;
+}
+
+int32_t ProgressTracker::getInFlight() {
+  return inFlight;
+}
+
+int32_t ProgressTracker::getSuccessful() {
+  return successful;
+}
+
+int32_t ProgressTracker::getFailed() {
+  return failed;
+}
+
+int32_t ProgressTracker::getPending() {
+  return total - (inFlight + successful + failed);
+}

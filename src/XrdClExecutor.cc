@@ -99,7 +99,7 @@ public:
   bool ok() const {
     return ErrorAccumulator::ok() && file;
   }
-  
+
   std::unique_ptr<XrdCl::File> file;
 };
 

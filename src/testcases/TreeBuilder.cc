@@ -27,10 +27,12 @@
 #include "TreeBuilder.hh"
 #include "../XrdClExecutor.hh"
 #include "../HierarchyBuilder.hh"
+#include "utils/ProgressTracker.hh"
 using namespace eostest;
 
-TreeBuilder::TreeBuilder(const Options &opts) {
+TreeBuilder::TreeBuilder(const Options &opts, ProgressTracker *track) {
   options = opts;
+  tracker = track;
 }
 
 folly::Future<ErrorAccumulator> TreeBuilder::initialize() {
@@ -84,7 +86,9 @@ void TreeBuilder::main(ThreadAssistant &assistant) {
         queue.push(XrdClExecutor::mkdir(1, url.GetURL()));
       }
       else {
-        queue.push(XrdClExecutor::put(1, url.GetURL(), entry.contents));
+        folly::Future<OperationStatus> fut = XrdClExecutor::put(1, url.GetURL(), entry.contents);
+        if(tracker) fut = tracker->filterFuture(std::move(fut));
+        queue.push(std::move(fut));
       }
     }
   }

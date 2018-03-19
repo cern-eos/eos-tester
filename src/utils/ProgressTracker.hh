@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: TreeBuilder.hh
+// File: ProgressTracker.hh
 // Author: Georgios Bitzes - CERN
 // ----------------------------------------------------------------------
 
@@ -21,36 +21,51 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#ifndef EOSTESTER_TESTCASE_TREE_BUILDER_H
-#define EOSTESTER_TESTCASE_TREE_BUILDER_H
+#ifndef EOSTESTER_PROGRESS_TRACKER_H
+#define EOSTESTER_PROGRESS_TRACKER_H
 
-#include <string>
-#include <folly/futures/Future.h>
-#include "../utils/AssistedThread.hh"
-#include "../utils/ErrorAccumulator.hh"
+#include <atomic>
+#include <functional>
 
 namespace eostest {
 
-class ProgressTracker;
-
-class TreeBuilder {
+class ProgressTracker {
 public:
-  struct Options {
-    std::string baseUrl;
-    int32_t seed = 42;
-    size_t depth = 10;
-    size_t files = 100; // total number of files, including manifests
-  };
+  ProgressTracker(int32_t totalOperations);
+  ~ProgressTracker();
 
-  TreeBuilder(const Options &opts, ProgressTracker *tracker = nullptr);
-  folly::Future<ErrorAccumulator> initialize();
-  void main(ThreadAssistant &assistant);
+  void addInFlight();
+  void addSuccessful();
+  void addFailed();
+
+  int32_t getInFlight();
+  int32_t getSuccessful();
+  int32_t getFailed();
+  int32_t getPending();
+
+  template<typename T>
+  T filterFuture(T&& fut) {
+    addInFlight();
+    return fut.filter(std::bind(&ProgressTracker::futureCallback<typename T::value_type>, this, std::placeholders::_1));
+  }
+
+  template<typename T>
+  bool futureCallback(const T& status) {
+    if(status.ok()) {
+      addSuccessful();
+    }
+    else {
+      addFailed();
+    }
+
+    return true;
+  }
 
 private:
-  Options options;
-  folly::Promise<ErrorAccumulator> promise;
-  AssistedThread thread;
-  ProgressTracker *tracker = nullptr;
+  int32_t total;
+  std::atomic<int32_t> inFlight {0};
+  std::atomic<int32_t> successful {0};
+  std::atomic<int32_t> failed {0};
 };
 
 }

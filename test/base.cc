@@ -24,6 +24,8 @@
 #include <gtest/gtest.h>
 #include "HashCalculator.hh"
 #include "Utils.hh"
+#include "utils/ProgressTracker.hh"
+#include "Macros.hh"
 using namespace eostest;
 
 TEST(HashCalculator, BasicSanity) {
@@ -50,4 +52,29 @@ TEST(Utils, extractLineWithPrefix) {
 
   contents ="abc\nFILENAME: adgfas";
   ASSERT_FALSE(extractLineWithPrefix(contents, 4, "FILENAME: ", extracted));
+}
+
+TEST(Utils, ProgressTracker) {
+  ProgressTracker tracker(100);
+
+  ASSERT_EQ(tracker.getPending(), 100);
+  ASSERT_EQ(tracker.getInFlight(), 0);
+
+  ASSERT_THROW(tracker.addSuccessful(), FatalException);
+  ASSERT_THROW(tracker.addFailed(), FatalException);
+
+  tracker.addInFlight();
+
+  ASSERT_EQ(tracker.getPending(), 99);
+  ASSERT_EQ(tracker.getInFlight(), 1);
+  ASSERT_EQ(tracker.getSuccessful(), 0);
+  ASSERT_EQ(tracker.getFailed(), 0);
+
+  tracker.addSuccessful();
+
+  ASSERT_EQ(tracker.getPending(), 99);
+  ASSERT_EQ(tracker.getInFlight(), 0);
+  ASSERT_EQ(tracker.getSuccessful(), 1);
+  ASSERT_EQ(tracker.getFailed(), 0);
+
 }
