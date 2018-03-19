@@ -26,23 +26,66 @@
 #include <rang.hpp>
 #include <CLI11.hpp>
 
+#include "testcases/TreeBuilder.hh"
+#include "testcases/TreeValidator.hh"
+
+using namespace eostest;
+
 int main(int argc, char **argv) {
   // Reset terminal colors on exit
   std::atexit([](){std::cout << rang::style::reset;});
 
-  int32_t randomSeed = 0;
+  TreeBuilder::Options builderOpts;
   std::string targetPath = "";
 
   CLI::App app{"This tool collects a number of functional and stress tests for the EOS storage system."};
-  app.add_option("--path", targetPath, "The path under which all tests will be run.")
-    ->required();
 
-  app.add_option("--seed", randomSeed, "Seed for random number generation");
+  auto treeSubcommand = app.add_subcommand("tree", "Build and verify namespace trees");
+  app.require_subcommand();
+
+  auto buildOpt = treeSubcommand->add_option("--build", targetPath, "Build a namespace tree in the specified URL.");
+  auto seedOpt = treeSubcommand->add_option("--seed", builderOpts.seed, "Random seed to use when building a namespace tree.")
+    ->needs(buildOpt);
+
+  auto depthOpt = treeSubcommand->add_option("--depth", builderOpts.depth, "The depth of the namespace tree to be created.")
+    ->needs(buildOpt);
+
+  auto nfilesOpt = treeSubcommand->add_option("--nfiles", builderOpts.files, "The size in number of files for the namesapce tree to build")
+   ->needs(buildOpt);
+
+  auto validateOpt = treeSubcommand->add_option("--validate", targetPath, "Verify a namespace tree present in the specified URL.")
+    ->excludes(buildOpt)
+    ->excludes(seedOpt)
+    ->excludes(depthOpt)
+    ->excludes(nfilesOpt);
+
+  buildOpt->group("Operation");
+  validateOpt->group("Operation");
 
   try {
     app.parse(argc, argv);
   } catch (const CLI::ParseError &e) {
     return app.exit(e);
+  }
+
+  if(*buildOpt) {
+    builderOpts.baseUrl = targetPath;
+    TreeBuilder builder(builderOpts);
+
+    ErrorAccumulator accu = builder.initialize().get();
+    if(!accu.ok()) {
+      std::cout << accu.toString() << std::endl;
+      return 1;
+    }
+  }
+  else if(*validateOpt) {
+    TreeValidator validator(targetPath);
+    ErrorAccumulator accu = validator.initialize().get();
+
+    if(!accu.ok()) {
+      std::cout << accu.toString() << std::endl;
+      return 1;
+    }
   }
 
   return 0;

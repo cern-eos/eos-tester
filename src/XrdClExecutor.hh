@@ -45,9 +45,7 @@ public:
 class ReadStatus : public ErrorAccumulator {
 public:
   using ErrorAccumulator::ErrorAccumulator;
-  ReadStatus() {}
   ReadStatus(const ReadOutcome &outcome);
-
   std::string contents;
 };
 

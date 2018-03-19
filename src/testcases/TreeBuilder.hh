@@ -35,9 +35,9 @@ class TreeBuilder {
 public:
   struct Options {
     std::string baseUrl;
-    int32_t seed;
-    size_t depth;
-    size_t files; // total number of files, including manifests
+    int32_t seed = 42;
+    size_t depth = 10;
+    size_t files = 100; // total number of files, including manifests
   };
 
   TreeBuilder(const Options &opts);

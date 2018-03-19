@@ -91,19 +91,15 @@ namespace eostest {
 
 class OpenStatus : public ErrorAccumulator {
 public:
-  OpenStatus(const std::string &err) {
-    addError(err);
-  }
+  using ErrorAccumulator::ErrorAccumulator;
 
   OpenStatus(std::unique_ptr<XrdCl::File> f)
   : file(std::move(f)) { }
 
-  OpenStatus() {}
-
   bool ok() const {
     return ErrorAccumulator::ok() && file;
   }
-
+  
   std::unique_ptr<XrdCl::File> file;
 };
 
@@ -291,7 +287,7 @@ public:
   }
 
   bool ok() const {
-    return readStatus. ok();
+    return readStatus.ok();
   }
 
   ReadStatus readStatus;
