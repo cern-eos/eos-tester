@@ -38,20 +38,17 @@ class ReadOutcome;
 
 class OperationStatus : public ErrorAccumulator {
 public:
-  OperationStatus(); // success
-  OperationStatus(const std::string &err); // error
+  using ErrorAccumulator::ErrorAccumulator;
   OperationStatus(const OpenStatus &openStatus); // copy any errors from openStatus
 };
 
-class ReadStatus {
+class ReadStatus : public ErrorAccumulator {
 public:
+  using ErrorAccumulator::ErrorAccumulator;
   ReadStatus() {}
   ReadStatus(const ReadOutcome &outcome);
 
-  OperationStatus status;
   std::string contents;
-
-  bool ok() const;
 };
 
 class DirListStatus : public ErrorAccumulator {

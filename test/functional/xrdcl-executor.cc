@@ -29,7 +29,7 @@ using namespace eostest;
 
 TEST(XrdClExecutor, BasicSanity) {
   OperationStatus status = XrdClExecutor::mkdir(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/sanity/").get();
-  ASSERT_TRUE(status.ok());
+  ASSERT_TRUE(status.ok()) << status.toString();
 
   status = XrdClExecutor::rm(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/sanity/f1").get();
   ASSERT_FALSE(status.ok());
@@ -52,10 +52,10 @@ TEST(XrdClExecutor, BasicSanity) {
 }
 
 TEST(TreeValidator, BasicSanity) {
-  ASSERT_EQ(system("gfal-rm -r root://eospps.cern.ch///eos/user/gbitzes/eostester/tree-simple-2/"), 0);
+  ASSERT_EQ(system("gfal-rm -r root://eospps.cern.ch///eos/user/gbitzes/eostester/tree-simple/"), 0);
 
   TreeBuilder::Options opts;
-  opts.baseUrl = "root://eospps.cern.ch//eos/user/gbitzes/eostester/tree-simple-2";
+  opts.baseUrl = "root://eospps.cern.ch//eos/user/gbitzes/eostester/tree-simple";
   opts.seed = 42;
   opts.depth = 5;
   opts.files = 100;

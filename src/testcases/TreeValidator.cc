@@ -43,7 +43,7 @@ ManifestHolder parseManifest(ReadStatus status, std::string path) {
   ManifestHolder holder;
 
   if(!status.ok()) {
-    holder.addError(SSTR("Error fetching " << path << ": " << status.status.toString()));
+    holder.addError(SSTR("Error fetching " << path << ": " << status.toString()));
     return holder;
   }
 
@@ -64,7 +64,7 @@ ErrorAccumulator parseFile(ReadStatus status, std::string path) {
   ErrorAccumulator accu;
 
   if(!status.ok()) {
-    accu.absorbErrors(status.status);
+    accu.absorbErrors(status);
     return accu;
   }
 
@@ -170,8 +170,6 @@ void TreeValidator::main(ThreadAssistant &assistant) {
       // Case 4: We're completely done with this level, pop.
       stack.pop_back();
     }
-
-
   }
 
   promise.setValue(acc);

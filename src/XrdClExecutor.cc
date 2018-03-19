@@ -30,12 +30,6 @@
 
 using namespace eostest;
 
-OperationStatus::OperationStatus() { }
-
-OperationStatus::OperationStatus(const std::string &err) {
-  addError(err);
-}
-
 class HandlerHelper {
 public:
   HandlerHelper() {}
@@ -283,21 +277,17 @@ private:
   folly::Promise<OperationStatus> promise;
 };
 
-bool ReadStatus::ok() const {
-  return status.ok();
-}
-
 namespace eostest {
 
 class ReadOutcome {
 public:
   ReadOutcome() {}
   ReadOutcome(const OpenStatus &openStatus) {
-    readStatus.status = OperationStatus(openStatus);
+    readStatus.absorbErrors(openStatus);
   }
 
   void addError(const std::string &err) {
-    readStatus.status.addError(err);
+    readStatus.addError(err);
   }
 
   bool ok() const {
@@ -337,7 +327,7 @@ public:
     );
 
     if(!status.IsOK()) {
-      retval.readStatus.status.addError(status.ToString());
+      retval.readStatus.addError(status.ToString());
       setValueAndDeleteThis(promise, std::move(retval));
       return fut;
     }
@@ -347,7 +337,7 @@ public:
 
   virtual void HandleResponse(XrdCl::XRootDStatus *status, XrdCl::AnyObject *response) override {
     if(!status->IsOK()) {
-      retval.readStatus.status.addError(status->ToString());
+      retval.readStatus.addError(status->ToString());
     }
     else {
       XrdCl::ChunkInfo *chunk;
