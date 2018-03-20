@@ -85,7 +85,10 @@ int main(int argc, char **argv) {
     }
   }
   else if(*validateOpt) {
-    TreeValidator validator(targetPath);
+    ProgressTracker tracker(-1);
+    ProgressTicker ticker(tracker);
+
+    TreeValidator validator(targetPath, &tracker);
     TestcaseStatus accu = validator.initialize().get();
 
     if(!accu.ok()) {

@@ -24,6 +24,7 @@
 #include <functional>
 #include <iostream>
 #include "TreeValidator.hh"
+#include "utils/ProgressTracker.hh"
 #include "../Manifest.hh"
 #include "../XrdClExecutor.hh"
 #include "../SelfCheckedFile.hh"
@@ -31,7 +32,9 @@
 #include "Utils.hh"
 using namespace eostest;
 
-TreeValidator::TreeValidator(const std::string &base) : url(base) {}
+TreeValidator::TreeValidator(const std::string &base, ProgressTracker *track) : url(base) {
+  tracker = track;
+}
 
 folly::Future<TestcaseStatus> TreeValidator::initialize() {
   folly::Future<TestcaseStatus> fut = promise.getFuture();
@@ -104,24 +107,26 @@ ManifestHolder combineErrors(ManifestHolder &holder, std::vector<TestcaseStatus>
   return std::move(holder);
 }
 
-folly::Future<ManifestHolder> validateContainedFiles(ManifestHolder holder, std::string path) {
+folly::Future<ManifestHolder> TreeValidator::validateContainedFiles(ManifestHolder holder, std::string path) {
   std::vector<folly::Future<TestcaseStatus>> accus;
 
   std::string file;
   while(holder.manifest.popFile(file)) {
-    accus.emplace_back(validateSingleFile(SSTR(path << "/" << file)));
+    folly::Future<TestcaseStatus> st = validateSingleFile(SSTR(path << "/" << file));
+    if(tracker) st = tracker->filterFuture(std::move(st));
+    accus.emplace_back(std::move(st));
   }
 
   return folly::collect(accus).then(std::bind(combineErrors, std::move(holder), std::placeholders::_1));
 }
 
-folly::Future<ManifestHolder> validateSingleDirectory(const std::string &path) {
+folly::Future<ManifestHolder> TreeValidator::validateSingleDirectory(const std::string &path) {
   folly::Future<DirListStatus> dirList = XrdClExecutor::dirList(1, path);
   folly::Future<ManifestHolder> holder = fetchManifest(SSTR(path << "/MANIFEST"));
 
   return folly::collect(holder, dirList)
     .then(validateManifest)
-    .then(std::bind(validateContainedFiles, std::placeholders::_1, path));
+    .then(std::bind(&TreeValidator::validateContainedFiles, this, std::placeholders::_1, path));
 }
 
 eostest::TreeLevel TreeValidator::insertLevel(ManifestHolder manifest) {

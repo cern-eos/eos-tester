@@ -67,7 +67,7 @@ TEST(TreeValidator, BasicSanity) {
 
   std::cout << "Construction OK, starting validation..." << std::endl;
 
-  TreeValidator validator(opts.baseUrl);
+  TreeValidator validator(opts.baseUrl, nullptr);
   acc = validator.initialize().get();
   ASSERT_TRUE(acc.ok()) << acc.toString();
 }

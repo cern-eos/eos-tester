@@ -39,20 +39,24 @@ struct TreeLevel {
   std::deque<folly::Future<ManifestHolder>> unexpandedChildren;
 };
 
+class ProgressTracker;
 
 class TreeValidator {
 public:
-  TreeValidator(const std::string &url);
+  TreeValidator(const std::string &url, ProgressTracker *track);
   folly::Future<TestcaseStatus> initialize();
   void main(ThreadAssistant &assistant);
-
 
 private:
   std::string url;
   folly::Promise<TestcaseStatus> promise;
   AssistedThread thread;
+  ProgressTracker* tracker = nullptr;
 
   TreeLevel insertLevel(ManifestHolder manifest);
+  folly::Future<ManifestHolder> validateSingleDirectory(const std::string &path);
+  folly::Future<ManifestHolder> validateContainedFiles(ManifestHolder holder, std::string path);
+
 };
 
 }
