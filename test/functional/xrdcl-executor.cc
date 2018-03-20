@@ -62,7 +62,7 @@ TEST(TreeValidator, BasicSanity) {
 
   TreeBuilder builder(opts);
 
-  ErrorAccumulator acc = builder.initialize().get();
+  TestcaseStatus acc = builder.initialize().get();
   ASSERT_TRUE(acc.ok()) << acc.toString();
 
   std::cout << "Construction OK, starting validation..." << std::endl;

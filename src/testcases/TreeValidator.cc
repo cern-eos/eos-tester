@@ -33,8 +33,8 @@ using namespace eostest;
 
 TreeValidator::TreeValidator(const std::string &base) : url(base) {}
 
-folly::Future<ErrorAccumulator> TreeValidator::initialize() {
-  folly::Future<ErrorAccumulator> fut = promise.getFuture();
+folly::Future<TestcaseStatus> TreeValidator::initialize() {
+  folly::Future<TestcaseStatus> fut = promise.getFuture();
   thread.reset(&TreeValidator::main, this);
   return fut;
 }
@@ -60,8 +60,8 @@ ManifestHolder parseManifest(ReadStatus status, std::string path) {
   return holder;
 }
 
-ErrorAccumulator parseFile(ReadStatus status, std::string path) {
-  ErrorAccumulator accu;
+TestcaseStatus parseFile(ReadStatus status, std::string path) {
+  TestcaseStatus accu;
 
   if(!status.ok()) {
     accu.absorbErrors(status);
@@ -91,12 +91,12 @@ ManifestHolder validateManifest(std::tuple<ManifestHolder, DirListStatus> tup) {
   return manifestHolder;
 }
 
-folly::Future<ErrorAccumulator> validateSingleFile(const std::string &path) {
+folly::Future<TestcaseStatus> validateSingleFile(const std::string &path) {
   folly::Future<ReadStatus> readStatus = XrdClExecutor::get(1, path);
   return readStatus.then(std::bind(parseFile, std::placeholders::_1, path));
 }
 
-ManifestHolder combineErrors(ManifestHolder holder, std::vector<ErrorAccumulator> errors) {
+ManifestHolder combineErrors(ManifestHolder holder, std::vector<TestcaseStatus> errors) {
   for(size_t i = 0; i < errors.size(); i++) {
     holder.absorbErrors(errors[i]);
   }
@@ -105,7 +105,7 @@ ManifestHolder combineErrors(ManifestHolder holder, std::vector<ErrorAccumulator
 }
 
 folly::Future<ManifestHolder> validateContainedFiles(ManifestHolder holder, std::string path) {
-  std::vector<folly::Future<ErrorAccumulator>> accus;
+  std::vector<folly::Future<TestcaseStatus>> accus;
 
   std::string file;
   while(holder.manifest.popFile(file)) {
@@ -139,7 +139,7 @@ eostest::TreeLevel TreeValidator::insertLevel(ManifestHolder manifest) {
 }
 
 void TreeValidator::main(ThreadAssistant &assistant) {
-  ErrorAccumulator acc;
+  TestcaseStatus acc;
 
   std::deque<TreeLevel> stack;
   stack.emplace_back(insertLevel(validateSingleDirectory(url).get()));

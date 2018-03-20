@@ -27,7 +27,7 @@
 #include <string>
 #include <folly/futures/Future.h>
 #include "../utils/AssistedThread.hh"
-#include "../utils/ErrorAccumulator.hh"
+#include "../utils/TestcaseStatus.hh"
 
 namespace eostest {
 
@@ -43,12 +43,12 @@ public:
   };
 
   TreeBuilder(const Options &opts, ProgressTracker *tracker = nullptr);
-  folly::Future<ErrorAccumulator> initialize();
+  folly::Future<TestcaseStatus> initialize();
   void main(ThreadAssistant &assistant);
 
 private:
   Options options;
-  folly::Promise<ErrorAccumulator> promise;
+  folly::Promise<TestcaseStatus> promise;
   AssistedThread thread;
   ProgressTracker *tracker = nullptr;
 };

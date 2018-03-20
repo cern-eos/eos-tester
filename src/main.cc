@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
     builderOpts.baseUrl = targetPath;
     TreeBuilder builder(builderOpts, &tracker);
 
-    ErrorAccumulator accu = builder.initialize().get();
+    TestcaseStatus accu = builder.initialize().get();
     if(!accu.ok()) {
       std::cout << accu.toString() << std::endl;
       return 1;
@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
   }
   else if(*validateOpt) {
     TreeValidator validator(targetPath);
-    ErrorAccumulator accu = validator.initialize().get();
+    TestcaseStatus accu = validator.initialize().get();
 
     if(!accu.ok()) {
       std::cout << accu.toString() << std::endl;

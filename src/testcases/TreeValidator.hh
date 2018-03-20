@@ -22,13 +22,13 @@
  ************************************************************************/
 
 #include <folly/futures/Future.h>
-#include "utils/ErrorAccumulator.hh"
+#include "utils/TestcaseStatus.hh"
 #include "utils/AssistedThread.hh"
 #include "Manifest.hh"
 
 namespace eostest {
 
-struct ManifestHolder : public ErrorAccumulator {
+struct ManifestHolder : public TestcaseStatus {
   Manifest manifest;
 };
 
@@ -43,13 +43,13 @@ struct TreeLevel {
 class TreeValidator {
 public:
   TreeValidator(const std::string &url);
-  folly::Future<ErrorAccumulator> initialize();
+  folly::Future<TestcaseStatus> initialize();
   void main(ThreadAssistant &assistant);
 
 
 private:
   std::string url;
-  folly::Promise<ErrorAccumulator> promise;
+  folly::Promise<TestcaseStatus> promise;
   AssistedThread thread;
 
   TreeLevel insertLevel(ManifestHolder manifest);

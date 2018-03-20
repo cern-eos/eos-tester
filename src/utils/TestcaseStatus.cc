@@ -23,24 +23,24 @@
 
 #include <sstream>
 #include "../Macros.hh"
-#include "ErrorAccumulator.hh"
+#include "TestcaseStatus.hh"
 using namespace eostest;
 
-ErrorAccumulator::ErrorAccumulator() {}
+TestcaseStatus::TestcaseStatus() {}
 
-ErrorAccumulator::ErrorAccumulator(const std::string &err) {
+TestcaseStatus::TestcaseStatus(const std::string &err) {
   addError(err);
 }
 
-void ErrorAccumulator::addError(const std::string &err) {
+void TestcaseStatus::addError(const std::string &err) {
   errors.push_back(err);
 }
 
-bool ErrorAccumulator::ok() const {
+bool TestcaseStatus::ok() const {
   return errors.empty();
 }
 
-std::string ErrorAccumulator::toString() const {
+std::string TestcaseStatus::toString() const {
   std::ostringstream ss;
   for(size_t i = 0; i < errors.size(); i++) {
     ss << "- " << errors[i] << std::endl;
@@ -49,7 +49,7 @@ std::string ErrorAccumulator::toString() const {
   return ss.str();
 }
 
-void ErrorAccumulator::absorbErrors(const ErrorAccumulator &acc) {
+void TestcaseStatus::absorbErrors(const TestcaseStatus &acc) {
   for(size_t i = 0; i < acc.errors.size(); i++) {
     errors.push_back(SSTR("    " << acc.errors[i]));
   }

@@ -35,14 +35,14 @@ TreeBuilder::TreeBuilder(const Options &opts, ProgressTracker *track) {
   tracker = track;
 }
 
-folly::Future<ErrorAccumulator> TreeBuilder::initialize() {
-  folly::Future<ErrorAccumulator> fut = promise.getFuture();
+folly::Future<TestcaseStatus> TreeBuilder::initialize() {
+  folly::Future<TestcaseStatus> fut = promise.getFuture();
   thread.reset(&TreeBuilder::main, this);
   return fut;
 }
 
 void TreeBuilder::main(ThreadAssistant &assistant) {
-  ErrorAccumulator accumulator;
+  TestcaseStatus accumulator;
 
   const size_t pipelineLength = 5000;
   std::queue<folly::Future<OperationStatus>> queue;

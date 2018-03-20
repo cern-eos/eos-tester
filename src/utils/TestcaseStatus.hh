@@ -29,13 +29,13 @@
 
 namespace eostest {
 
-class ErrorAccumulator {
+class TestcaseStatus {
 public:
-  ErrorAccumulator();
-  ErrorAccumulator(const std::string &err);
+  TestcaseStatus();
+  TestcaseStatus(const std::string &err);
   void addError(const std::string &err);
   bool ok() const;
-  void absorbErrors(const ErrorAccumulator &acc);
+  void absorbErrors(const TestcaseStatus &acc);
   std::string toString() const;
 
 // private:

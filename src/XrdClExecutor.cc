@@ -89,15 +89,15 @@ private:
 
 namespace eostest {
 
-class OpenStatus : public ErrorAccumulator {
+class OpenStatus : public TestcaseStatus {
 public:
-  using ErrorAccumulator::ErrorAccumulator;
+  using TestcaseStatus::TestcaseStatus;
 
   OpenStatus(std::unique_ptr<XrdCl::File> f)
   : file(std::move(f)) { }
 
   bool ok() const {
-    return ErrorAccumulator::ok() && file;
+    return TestcaseStatus::ok() && file;
   }
 
   std::unique_ptr<XrdCl::File> file;

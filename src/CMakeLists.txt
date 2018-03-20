@@ -9,9 +9,9 @@ add_library(eostester STATIC
   testcases/TreeBuilder.cc                               testcases/TreeBuilder.hh
   testcases/TreeValidator.cc                             testcases/TreeValidator.hh
                                                          utils/AssistedThread.hh
-  utils/ErrorAccumulator.cc                              utils/ErrorAccumulator.hh
   utils/ProgressTicker.cc                                utils/ProgressTicker.hh
   utils/ProgressTracker.cc                               utils/ProgressTracker.hh
+  utils/TestcaseStatus.cc                                utils/TestcaseStatus.hh
   HashCalculator.cc                                      HashCalculator.hh
   HierarchyBuilder.cc                                    HierarchyBuilder.hh
   Manifest.cc                                            Manifest.hh

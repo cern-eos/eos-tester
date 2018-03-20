@@ -27,7 +27,7 @@
 #include <future>
 #include <vector>
 #include <string>
-#include "utils/ErrorAccumulator.hh"
+#include "utils/TestcaseStatus.hh"
 #include <folly/futures/Future.h>
 #include <XrdCl/XrdClFileSystem.hh>
 
@@ -36,22 +36,22 @@ namespace eostest {
 class OpenStatus;
 class ReadOutcome;
 
-class OperationStatus : public ErrorAccumulator {
+class OperationStatus : public TestcaseStatus {
 public:
-  using ErrorAccumulator::ErrorAccumulator;
+  using TestcaseStatus::TestcaseStatus;
   OperationStatus(const OpenStatus &openStatus); // copy any errors from openStatus
 };
 
-class ReadStatus : public ErrorAccumulator {
+class ReadStatus : public TestcaseStatus {
 public:
-  using ErrorAccumulator::ErrorAccumulator;
+  using TestcaseStatus::TestcaseStatus;
   ReadStatus(const ReadOutcome &outcome);
   std::string contents;
 };
 
-class DirListStatus : public ErrorAccumulator {
+class DirListStatus : public TestcaseStatus {
 public:
-  using ErrorAccumulator::ErrorAccumulator;
+  using TestcaseStatus::TestcaseStatus;
   std::unique_ptr<XrdCl::DirectoryList> contents;
 };
 
