@@ -25,14 +25,12 @@
 #include "Macros.hh"
 using namespace eostest;
 
-ProgressTracker::ProgressTracker(int32_t ops) : total(ops) {
-  eost_assert(total >= 0);
-}
+ProgressTracker::ProgressTracker(int32_t ops) : total(ops) { }
 ProgressTracker::~ProgressTracker() {}
 
 void ProgressTracker::addInFlight() {
+  eost_assert(!totalKnown() || (inFlight + 1 + successful + failed) <= total);
   inFlight++;
-  eost_assert(inFlight <= total);
 }
 
 void ProgressTracker::addSuccessful() {
@@ -62,5 +60,10 @@ int32_t ProgressTracker::getFailed() {
 }
 
 int32_t ProgressTracker::getPending() {
+  if(!totalKnown()) return 0;
   return total - (inFlight + successful + failed);
+}
+
+bool ProgressTracker::totalKnown() const {
+  return total > 0;
 }

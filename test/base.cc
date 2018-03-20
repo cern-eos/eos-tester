@@ -79,6 +79,51 @@ TEST(Utils, ProgressTracker) {
   ASSERT_EQ(tracker.getFailed(), 0);
 }
 
+TEST(Utils, ProgressTrackerOverflow) {
+  ProgressTracker tracker(2);
+
+  tracker.addInFlight();
+  tracker.addInFlight();
+
+  ASSERT_THROW(tracker.addInFlight(), FatalException);
+
+  ASSERT_EQ(tracker.getPending(), 0);
+  ASSERT_EQ(tracker.getInFlight(), 2);
+  ASSERT_EQ(tracker.getSuccessful(), 0);
+  ASSERT_EQ(tracker.getFailed(), 0);
+
+  tracker.addSuccessful();
+  tracker.addFailed();
+
+  ASSERT_EQ(tracker.getPending(), 0);
+  ASSERT_EQ(tracker.getInFlight(), 0);
+  ASSERT_EQ(tracker.getSuccessful(), 1);
+  ASSERT_EQ(tracker.getFailed(), 1);
+}
+
+TEST(Utils, ProgressTrackerWithUnknownNumberOfOperations) {
+  ProgressTracker tracker(-1);
+
+  ASSERT_EQ(tracker.getPending(), 0);
+  ASSERT_EQ(tracker.getInFlight(), 0);
+
+  ASSERT_THROW(tracker.addSuccessful(), FatalException);
+
+  tracker.addInFlight();
+
+  ASSERT_EQ(tracker.getPending(), 0);
+  ASSERT_EQ(tracker.getInFlight(), 1);
+  ASSERT_EQ(tracker.getSuccessful(), 0);
+  ASSERT_EQ(tracker.getFailed(), 0);
+
+  tracker.addSuccessful();
+
+  ASSERT_EQ(tracker.getPending(), 0);
+  ASSERT_EQ(tracker.getInFlight(), 0);
+  ASSERT_EQ(tracker.getSuccessful(), 1);
+  ASSERT_EQ(tracker.getFailed(), 0);
+}
+
 TEST(Utils, Sealing) {
   folly::Promise<TestcaseStatus> promise;
   folly::Future<TestcaseStatus> fut = Sealing::seal(promise.getFuture(), "A random description");

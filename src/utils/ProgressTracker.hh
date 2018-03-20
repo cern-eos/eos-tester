@@ -43,6 +43,8 @@ public:
   int32_t getFailed();
   int32_t getPending();
 
+  bool totalKnown() const;
+
   template<typename T>
   T filterFuture(T&& fut) {
     addInFlight();
