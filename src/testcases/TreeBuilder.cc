@@ -45,7 +45,7 @@ void TreeBuilder::main(ThreadAssistant &assistant) {
   TestcaseStatus accumulator;
 
   const size_t pipelineLength = 5000;
-  std::queue<folly::Future<OperationStatus>> queue;
+  std::queue<folly::Future<TestcaseStatus>> queue;
 
   XrdCl::URL url(options.baseUrl);
 
@@ -86,7 +86,7 @@ void TreeBuilder::main(ThreadAssistant &assistant) {
         queue.push(XrdClExecutor::mkdir(1, url.GetURL()));
       }
       else {
-        folly::Future<OperationStatus> fut = XrdClExecutor::put(1, url.GetURL(), entry.contents);
+        folly::Future<TestcaseStatus> fut = XrdClExecutor::put(1, url.GetURL(), entry.contents);
         if(tracker) fut = tracker->filterFuture(std::move(fut));
         queue.push(std::move(fut));
       }

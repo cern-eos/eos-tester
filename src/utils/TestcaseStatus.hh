@@ -38,7 +38,7 @@ public:
   void absorbErrors(const TestcaseStatus &acc);
   std::string toString() const;
 
-// private:
+private:
   std::vector<std::string> errors;
 };
 

@@ -33,14 +33,7 @@
 
 namespace eostest {
 
-class OpenStatus;
 class ReadOutcome;
-
-class OperationStatus : public TestcaseStatus {
-public:
-  using TestcaseStatus::TestcaseStatus;
-  OperationStatus(const OpenStatus &openStatus); // copy any errors from openStatus
-};
 
 class ReadStatus : public TestcaseStatus {
 public:
@@ -57,12 +50,12 @@ public:
 
 class XrdClExecutor {
 public:
-  static folly::Future<OperationStatus> mkdir(size_t connectionId, const std::string &url);
-  static folly::Future<OperationStatus> put(size_t connectionId, const std::string &url, const std::string &contents);
-  static folly::Future<OperationStatus> rm(size_t connectionId, const std::string &url);
+  static folly::Future<TestcaseStatus> mkdir(size_t connectionId, const std::string &url);
+  static folly::Future<TestcaseStatus> put(size_t connectionId, const std::string &url, const std::string &contents);
+  static folly::Future<TestcaseStatus> rm(size_t connectionId, const std::string &url);
   static folly::Future<ReadStatus> get(size_t connectionId, const std::string &path);
   static folly::Future<DirListStatus> dirList(size_t connectionId, const std::string &url);
-  static folly::Future<OperationStatus> rmdir(size_t connectionId, const std::string &url);
+  static folly::Future<TestcaseStatus> rmdir(size_t connectionId, const std::string &url);
 };
 
 }

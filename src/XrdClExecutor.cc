@@ -50,12 +50,12 @@ public:
     delete this;
   }
 
-  void trivialResponseHandler(folly::Promise<OperationStatus> &promise, XrdCl::XRootDStatus *status, XrdCl::AnyObject *response) {
+  void trivialResponseHandler(folly::Promise<TestcaseStatus> &promise, XrdCl::XRootDStatus *status, XrdCl::AnyObject *response) {
     if(!status->IsOK()) {
-      return finalize(promise, status, response, OperationStatus(status->ToString()));
+      return finalize(promise, status, response, TestcaseStatus(status->ToString()));
     }
 
-    return finalize(promise, status, response, OperationStatus());
+    return finalize(promise, status, response, TestcaseStatus());
   }
 
 };
@@ -65,12 +65,12 @@ public:
   MkdirHandler(const XrdCl::URL &ur) : url(ur), fs(ur.GetURL()) { }
   virtual ~MkdirHandler() {}
 
-  folly::Future<OperationStatus> initialize() {
-    folly::Future<OperationStatus> fut = promise.getFuture();
+  folly::Future<TestcaseStatus> initialize() {
+    folly::Future<TestcaseStatus> fut = promise.getFuture();
 
     XrdCl::XRootDStatus status = fs.MkDir(url.GetPath(), XrdCl::MkDirFlags::None, XrdCl::Access::OR, this);
     if(!status.IsOK()) {
-      setValueAndDeleteThis(promise, OperationStatus(status.ToString()));
+      setValueAndDeleteThis(promise, TestcaseStatus(status.ToString()));
       return fut;
     }
 
@@ -84,7 +84,7 @@ public:
 private:
   XrdCl::URL url;
   XrdCl::FileSystem fs;
-  folly::Promise<OperationStatus> promise;
+  folly::Promise<TestcaseStatus> promise;
 };
 
 namespace eostest {
@@ -103,10 +103,6 @@ public:
   std::unique_ptr<XrdCl::File> file;
 };
 
-}
-
-OperationStatus::OperationStatus(const OpenStatus &openStatus) {
-  errors = openStatus.errors;
 }
 
 class OpenHandler : public HandlerHelper, XrdCl::ResponseHandler {
@@ -226,12 +222,12 @@ std::string makeURL(size_t connectionId, const std::string &path) {
   return url.GetURL();
 }
 
-folly::Future<OperationStatus> XrdClExecutor::mkdir(size_t connectionId, const std::string &path) {
+folly::Future<TestcaseStatus> XrdClExecutor::mkdir(size_t connectionId, const std::string &path) {
   MkdirHandler *handler = new MkdirHandler(makeURL(connectionId, path));
   return handler->initialize();
 }
 
-folly::Future<OperationStatus> XrdClExecutor::put(size_t connectionId, const std::string &path, const std::string &contents) {
+folly::Future<TestcaseStatus> XrdClExecutor::put(size_t connectionId, const std::string &path, const std::string &contents) {
   OpenHandler *openHandler = new OpenHandler(
     makeURL(connectionId, path),
     XrdCl::OpenFlags::Update | XrdCl::OpenFlags::New,
@@ -239,11 +235,11 @@ folly::Future<OperationStatus> XrdClExecutor::put(size_t connectionId, const std
   );
 
   WriteHandler *writeHandler = new WriteHandler(contents);
-  CloseHandler<OpenStatus, OperationStatus> *closeHandler = new CloseHandler<OpenStatus, OperationStatus>();
+  CloseHandler<OpenStatus, TestcaseStatus> *closeHandler = new CloseHandler<OpenStatus, TestcaseStatus>();
 
   return openHandler->initialize()
     .then(&WriteHandler::initialize, writeHandler)
-    .then(&CloseHandler<OpenStatus, OperationStatus>::initialize, closeHandler);
+    .then(&CloseHandler<OpenStatus, TestcaseStatus>::initialize, closeHandler);
 }
 
 class RmHandler : public HandlerHelper, XrdCl::ResponseHandler {
@@ -251,12 +247,12 @@ public:
   RmHandler(const XrdCl::URL &ur) : url(ur), fs(ur.GetURL()) { }
   virtual ~RmHandler() {}
 
-  folly::Future<OperationStatus> initialize() {
-    folly::Future<OperationStatus> fut = promise.getFuture();
+  folly::Future<TestcaseStatus> initialize() {
+    folly::Future<TestcaseStatus> fut = promise.getFuture();
 
     XrdCl::XRootDStatus status = fs.Rm(url.GetPath(), this);
     if(!status.IsOK()) {
-      setValueAndDeleteThis(promise, OperationStatus(status.ToString()));
+      setValueAndDeleteThis(promise, TestcaseStatus(status.ToString()));
       return fut;
     }
 
@@ -270,7 +266,7 @@ public:
 private:
   XrdCl::URL url;
   XrdCl::FileSystem fs;
-  folly::Promise<OperationStatus> promise;
+  folly::Promise<TestcaseStatus> promise;
 };
 
 namespace eostest {
@@ -369,7 +365,7 @@ folly::Future<ReadStatus> XrdClExecutor::get(size_t connectionId, const std::str
     .then(&CloseHandler<ReadOutcome, ReadStatus>::initialize, closeHandler);
 }
 
-folly::Future<OperationStatus> XrdClExecutor::rm(size_t connectionId, const std::string &path) {
+folly::Future<TestcaseStatus> XrdClExecutor::rm(size_t connectionId, const std::string &path) {
   RmHandler *rmHandler = new RmHandler(makeURL(connectionId, path));
   return rmHandler->initialize();
 }
@@ -431,8 +427,8 @@ public:
 
   }
 
-  folly::Future<OperationStatus> initialize() {
-    folly::Future<OperationStatus> fut = promise.getFuture();
+  folly::Future<TestcaseStatus> initialize() {
+    folly::Future<TestcaseStatus> fut = promise.getFuture();
 
     XrdCl::XRootDStatus status = fs.RmDir(
       url.GetPath(),
@@ -440,7 +436,7 @@ public:
     );
 
     if(!status.IsOK()) {
-      setValueAndDeleteThis(promise, OperationStatus(status.ToString()));
+      setValueAndDeleteThis(promise, TestcaseStatus(status.ToString()));
     }
 
     return fut;
@@ -453,10 +449,10 @@ public:
 private:
   XrdCl::URL url;
   XrdCl::FileSystem fs;
-  folly::Promise<OperationStatus> promise;
+  folly::Promise<TestcaseStatus> promise;
 };
 
-folly::Future<OperationStatus> XrdClExecutor::rmdir(size_t connectionId, const std::string &url) {
+folly::Future<TestcaseStatus> XrdClExecutor::rmdir(size_t connectionId, const std::string &url) {
   RmdirHandler *handler = new RmdirHandler(url);
   return handler->initialize();
 }
