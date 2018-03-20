@@ -25,6 +25,7 @@
 #include "HashCalculator.hh"
 #include "Utils.hh"
 #include "utils/ProgressTracker.hh"
+#include "utils/Sealing.hh"
 #include "Macros.hh"
 using namespace eostest;
 
@@ -76,5 +77,18 @@ TEST(Utils, ProgressTracker) {
   ASSERT_EQ(tracker.getInFlight(), 0);
   ASSERT_EQ(tracker.getSuccessful(), 1);
   ASSERT_EQ(tracker.getFailed(), 0);
+}
 
+TEST(Utils, Sealing) {
+  folly::Promise<TestcaseStatus> promise;
+  folly::Future<TestcaseStatus> fut = Sealing::seal(promise.getFuture(), "A random description");
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  ASSERT_FALSE(fut.isReady());
+  promise.setValue(TestcaseStatus());
+  ASSERT_TRUE(fut.isReady());
+
+  TestcaseStatus st = fut.get();
+  ASSERT_EQ(st.getDescription(), "A random description");
+  ASSERT_TRUE(st.getDuration() > std::chrono::microseconds(500));
 }

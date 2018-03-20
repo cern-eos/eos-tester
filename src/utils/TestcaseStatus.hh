@@ -44,6 +44,8 @@ public:
   std::chrono::nanoseconds getDuration();
   void addChild(TestcaseStatus &&child);
 
+  std::string& getDescription();
+
 private:
   std::string description;
   std::chrono::nanoseconds duration;

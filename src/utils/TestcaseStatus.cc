@@ -67,3 +67,7 @@ std::chrono::nanoseconds TestcaseStatus::getDuration() {
 void TestcaseStatus::addChild(TestcaseStatus &&child) {
   children.emplace_back(std::move(child));
 }
+
+std::string& TestcaseStatus::getDescription() {
+  return description;
+}
