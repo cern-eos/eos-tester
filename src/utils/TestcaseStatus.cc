@@ -54,3 +54,12 @@ void TestcaseStatus::absorbErrors(const TestcaseStatus &acc) {
     errors.push_back(SSTR("    " << acc.errors[i]));
   }
 }
+
+void TestcaseStatus::seal(const std::string &descr, std::chrono::nanoseconds dur) {
+  description = descr;
+  duration = dur;
+}
+
+std::chrono::nanoseconds TestcaseStatus::getDuration() {
+  return duration;
+}

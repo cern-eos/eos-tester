@@ -11,6 +11,7 @@ add_library(eostester STATIC
                                                          utils/AssistedThread.hh
   utils/ProgressTicker.cc                                utils/ProgressTicker.hh
   utils/ProgressTracker.cc                               utils/ProgressTracker.hh
+                                                         utils/Sealing.hh
   utils/TestcaseStatus.cc                                utils/TestcaseStatus.hh
   HashCalculator.cc                                      HashCalculator.hh
   HierarchyBuilder.cc                                    HierarchyBuilder.hh

@@ -224,7 +224,7 @@ std::string makeURL(size_t connectionId, const std::string &path) {
 
 folly::Future<TestcaseStatus> XrdClExecutor::mkdir(size_t connectionId, const std::string &path) {
   MkdirHandler *handler = new MkdirHandler(makeURL(connectionId, path));
-  return handler->initialize();
+  return Sealing::seal(handler->initialize(), SSTR("xroot::mkdir on '" << path << "'"));
 }
 
 folly::Future<TestcaseStatus> XrdClExecutor::put(size_t connectionId, const std::string &path, const std::string &contents) {
@@ -237,9 +237,11 @@ folly::Future<TestcaseStatus> XrdClExecutor::put(size_t connectionId, const std:
   WriteHandler *writeHandler = new WriteHandler(contents);
   CloseHandler<OpenStatus, TestcaseStatus> *closeHandler = new CloseHandler<OpenStatus, TestcaseStatus>();
 
-  return openHandler->initialize()
+  folly::Future<TestcaseStatus> fullOperation = openHandler->initialize()
     .then(&WriteHandler::initialize, writeHandler)
     .then(&CloseHandler<OpenStatus, TestcaseStatus>::initialize, closeHandler);
+
+  return Sealing::seal(std::move(fullOperation), SSTR("xroot::put on '" << path << "'"));
 }
 
 class RmHandler : public HandlerHelper, XrdCl::ResponseHandler {
@@ -360,14 +362,17 @@ folly::Future<ReadStatus> XrdClExecutor::get(size_t connectionId, const std::str
 
   CloseHandler<ReadOutcome, ReadStatus> *closeHandler = new CloseHandler<ReadOutcome, ReadStatus>();
 
-  return openHandler->initialize()
+  folly::Future<ReadStatus> fullOperation = openHandler->initialize()
     .then(&ReadHandler::initialize, readHandler)
     .then(&CloseHandler<ReadOutcome, ReadStatus>::initialize, closeHandler);
+
+  return Sealing::seal(std::move(fullOperation), SSTR("xroot::get on '" << path << "'"));
 }
 
 folly::Future<TestcaseStatus> XrdClExecutor::rm(size_t connectionId, const std::string &path) {
-  RmHandler *rmHandler = new RmHandler(makeURL(connectionId, path));
-  return rmHandler->initialize();
+  XrdCl::URL url = makeURL(connectionId, path);
+  RmHandler *rmHandler = new RmHandler(url);
+  return Sealing::seal(rmHandler->initialize(), SSTR("xroot::rm on '" << url.GetURL() << "'"));
 }
 
 class DirListHandler : public HandlerHelper, XrdCl::ResponseHandler {
@@ -413,11 +418,10 @@ private:
 };
 
 folly::Future<DirListStatus> XrdClExecutor::dirList(size_t connectionId, const std::string &path) {
-  DirListHandler *handler = new DirListHandler(
-    makeURL(connectionId, path)
-  );
+  XrdCl::URL url = makeURL(connectionId, path);
 
-  return handler->initialize();
+  DirListHandler *handler = new DirListHandler(url);
+  return Sealing::seal(handler->initialize(), SSTR("xroot::DirList on '" << url.GetURL() << "'"));
 }
 
 class RmdirHandler : public HandlerHelper, XrdCl::ResponseHandler {
@@ -454,5 +458,5 @@ private:
 
 folly::Future<TestcaseStatus> XrdClExecutor::rmdir(size_t connectionId, const std::string &url) {
   RmdirHandler *handler = new RmdirHandler(url);
-  return handler->initialize();
+  return Sealing::seal(handler->initialize(), SSTR("xroot::rmdir on '" << url << "'"));
 }

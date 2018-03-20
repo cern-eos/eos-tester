@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: XrdClExecutor.hh
+// File: Sealing.hh
 // Author: Georgios Bitzes - CERN
 // ----------------------------------------------------------------------
 
@@ -21,42 +21,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#ifndef EOSTESTER_XRDCL_EXECUTOR_H
-#define EOSTESTER_XRDCL_EXECUTOR_H
+#ifndef EOSTESTER_SEALING_H
+#define EOSTESTER_SEALING_H
 
-#include <future>
 #include <vector>
 #include <string>
-#include "utils/TestcaseStatus.hh"
-#include "utils/Sealing.hh"
 #include <folly/futures/Future.h>
-#include <XrdCl/XrdClFileSystem.hh>
+#include "utils/TestcaseStatus.hh"
 
 namespace eostest {
 
-class ReadOutcome;
+class TestcaseStatus;
 
-class ReadStatus : public TestcaseStatus {
-public:
-  using TestcaseStatus::TestcaseStatus;
-  ReadStatus(const ReadOutcome &outcome);
-  std::string contents;
+struct PendingSeal {
+  std::string description;
+  std::chrono::steady_clock::time_point startTime;
 };
 
-class DirListStatus : public TestcaseStatus {
+class Sealing {
 public:
-  using TestcaseStatus::TestcaseStatus;
-  std::unique_ptr<XrdCl::DirectoryList> contents;
-};
 
-class XrdClExecutor {
-public:
-  static folly::Future<TestcaseStatus> mkdir(size_t connectionId, const std::string &url);
-  static folly::Future<TestcaseStatus> put(size_t connectionId, const std::string &url, const std::string &contents);
-  static folly::Future<TestcaseStatus> rm(size_t connectionId, const std::string &url);
-  static folly::Future<ReadStatus> get(size_t connectionId, const std::string &path);
-  static folly::Future<DirListStatus> dirList(size_t connectionId, const std::string &url);
-  static folly::Future<TestcaseStatus> rmdir(size_t connectionId, const std::string &url);
+  template<typename T>
+  static folly::Future<T> seal(folly::Future<T> &&fut, const std::string &description) {
+    PendingSeal pendingSeal;
+    pendingSeal.description = description;
+    pendingSeal.startTime = std::chrono::steady_clock::now();
+    return fut.then(std::bind(Sealing::callback<T>, pendingSeal, std::placeholders::_1));
+  }
+
+  template<typename T>
+  static T callback(PendingSeal seal, T st) {
+    st.seal(seal.description, std::chrono::steady_clock::now() - seal.startTime);
+    return std::move(st);
+  }
 };
 
 }

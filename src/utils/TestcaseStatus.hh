@@ -26,6 +26,7 @@
 
 #include <vector>
 #include <string>
+#include <chrono>
 
 namespace eostest {
 
@@ -38,7 +39,13 @@ public:
   void absorbErrors(const TestcaseStatus &acc);
   std::string toString() const;
 
+  void seal(const std::string &description, std::chrono::nanoseconds duration);
+  std::chrono::nanoseconds getDuration();
+
 private:
+  std::string description;
+  std::chrono::nanoseconds duration;
+
   std::vector<std::string> errors;
 };
 
