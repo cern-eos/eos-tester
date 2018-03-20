@@ -63,3 +63,7 @@ void TestcaseStatus::seal(const std::string &descr, std::chrono::nanoseconds dur
 std::chrono::nanoseconds TestcaseStatus::getDuration() {
   return duration;
 }
+
+void TestcaseStatus::addChild(TestcaseStatus &&child) {
+  children.emplace_back(std::move(child));
+}

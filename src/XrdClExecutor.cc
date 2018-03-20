@@ -189,14 +189,14 @@ public:
     folly::Future<OutgoingStatus> fut = promise.getFuture();
 
     if(!incoming.ok()) {
-      setValueAndDeleteThis(promise, OutgoingStatus(incoming));
+      setValueAndDeleteThis(promise, OutgoingStatus(std::move(incoming)));
       return fut;
     }
 
     XrdCl::XRootDStatus status = incoming.file->Close(this);
     if(!status.IsOK()) {
       incoming.addError(status.ToString());
-      setValueAndDeleteThis(promise, OutgoingStatus(incoming));
+      setValueAndDeleteThis(promise, OutgoingStatus(std::move(incoming)));
     }
 
     incomingStatus = std::move(incoming);
@@ -208,7 +208,7 @@ public:
       incomingStatus.addError(status->ToString());
     }
 
-    return finalize(promise, status, response, OutgoingStatus(incomingStatus));
+    return finalize(promise, status, response, OutgoingStatus(std::move(incomingStatus)));
   }
 
 private:
@@ -294,8 +294,8 @@ public:
 
 }
 
-ReadStatus::ReadStatus(const ReadOutcome &outcome) {
-  *this = outcome.readStatus;
+ReadStatus::ReadStatus(ReadOutcome &&outcome) {
+  *this = std::move(outcome.readStatus);
 }
 
 class ReadHandler : public HandlerHelper, XrdCl::ResponseHandler {

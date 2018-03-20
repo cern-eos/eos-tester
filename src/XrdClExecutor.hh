@@ -39,7 +39,7 @@ class ReadOutcome;
 class ReadStatus : public TestcaseStatus {
 public:
   using TestcaseStatus::TestcaseStatus;
-  ReadStatus(const ReadOutcome &outcome);
+  ReadStatus(ReadOutcome &&outcome);
   std::string contents;
 };
 

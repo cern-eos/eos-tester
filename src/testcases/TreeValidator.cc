@@ -96,12 +96,12 @@ folly::Future<TestcaseStatus> validateSingleFile(const std::string &path) {
   return readStatus.then(std::bind(parseFile, std::placeholders::_1, path));
 }
 
-ManifestHolder combineErrors(ManifestHolder holder, std::vector<TestcaseStatus> errors) {
+ManifestHolder combineErrors(ManifestHolder &holder, std::vector<TestcaseStatus> errors) {
   for(size_t i = 0; i < errors.size(); i++) {
     holder.absorbErrors(errors[i]);
   }
 
-  return holder;
+  return std::move(holder);
 }
 
 folly::Future<ManifestHolder> validateContainedFiles(ManifestHolder holder, std::string path) {
@@ -172,5 +172,5 @@ void TreeValidator::main(ThreadAssistant &assistant) {
     }
   }
 
-  promise.setValue(acc);
+  promise.setValue(std::move(acc));
 }
