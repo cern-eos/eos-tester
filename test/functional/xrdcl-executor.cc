@@ -40,6 +40,7 @@ TEST(XrdClExecutor, BasicSanity) {
   ReadStatus rstatus = XrdClExecutor::get(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/sanity/f1").get();
   ASSERT_TRUE(rstatus.ok());
   ASSERT_EQ(rstatus.contents, "adfasf");
+  ASSERT_EQ(rstatus.getDescription(), "xroot::get on 'root://eospps.cern.ch//eos/user/gbitzes/eostester/sanity/f1'");
 
   DirListStatus lstatus = XrdClExecutor::dirList(1, "root://eospps.cern.ch//eos/user/gbitzes/eostester/sanity").get();
   ASSERT_TRUE(lstatus.ok());

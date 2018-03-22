@@ -38,9 +38,12 @@ TEST(Manifest, BasicSanity) {
     "d5cd8d066bf2abb559bc7423407550912a794c0fd445113b90259ad7647d22b3\n"
   );
 
-  manifest.addFile("f1");
-  manifest.addFile("f2");
-  manifest.addFile("f3");
+  ASSERT_TRUE(manifest.tryAddFile("f1"));
+  ASSERT_TRUE(manifest.tryAddFile("f2"));
+  ASSERT_TRUE(manifest.tryAddFile("f3"));
+
+  ASSERT_EQ(manifest.fileCount(), 3u);
+  ASSERT_FALSE(manifest.tryAddFile("f3"));
 
   ASSERT_EQ(manifest.toString(),
     "MANIFEST: /eos/pps/base/somedir/manifest\n"
@@ -55,9 +58,16 @@ TEST(Manifest, BasicSanity) {
 
   ASSERT_EQ(manifest.checksum(), HashCalculator::sha256(manifest.toStringWithoutChecksum()));
 
-  manifest.addSubdir("dir1");
-  manifest.addSubdir("dir2");
-  manifest.addSubdir("dir3");
+  ASSERT_TRUE(manifest.tryAddSubdir("dir1"));
+  ASSERT_TRUE(manifest.tryAddSubdir("dir2"));
+  ASSERT_TRUE(manifest.tryAddSubdir("dir3"));
+
+  ASSERT_FALSE(manifest.tryAddFile("dir1"));
+  ASSERT_FALSE(manifest.tryAddSubdir("dir1"));
+  ASSERT_FALSE(manifest.tryAddSubdir("f1"));
+
+  ASSERT_EQ(manifest.fileCount(), 3u);
+  ASSERT_EQ(manifest.subdirCount(), 3u);
 
   ASSERT_EQ(manifest.toString(),
     "MANIFEST: /eos/pps/base/somedir/manifest\n"

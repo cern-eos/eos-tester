@@ -43,8 +43,12 @@ public:
   std::string checksum() const;
   bool fromString(const std::string &filename, std::string &error);
 
-  void addFile(const std::string &file);
-  void addSubdir(const std::string &subdir);
+  bool exists(const std::string &name);
+  bool tryAddFile(const std::string &file);
+  bool tryAddSubdir(const std::string &subdir);
+
+  size_t fileCount() const;
+  size_t subdirCount() const;
 
   bool popFile(std::string &file);
   bool popSubdir(std::string &subdir);

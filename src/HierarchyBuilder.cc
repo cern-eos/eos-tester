@@ -47,8 +47,8 @@ void HierarchyBuilder::insertNode(const std::string &path, size_t depth) {
   files = std::min(options.files, files);
   options.files -= files;
 
-  for(size_t i = 0; i < files; i++) {
-    stack.top().manifest.addFile(getRandomAlphanumericBytes(5, generator));
+  while(stack.top().manifest.fileCount() != files) {
+    stack.top().manifest.tryAddFile(getRandomAlphanumericBytes(5, generator));
   }
 
   if(depth >= options.depth) return;
@@ -56,8 +56,8 @@ void HierarchyBuilder::insertNode(const std::string &path, size_t depth) {
   subdirs = std::min(options.files, subdirs);
   options.files -= subdirs;
 
-  for(size_t i = 0; i < subdirs; i++) {
-    stack.top().manifest.addSubdir(getRandomAlphanumericBytes(5, generator));
+  while(stack.top().manifest.subdirCount() != subdirs) {
+    stack.top().manifest.tryAddSubdir(getRandomAlphanumericBytes(5, generator));
   }
 }
 

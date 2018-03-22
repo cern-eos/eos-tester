@@ -29,6 +29,7 @@
 #include "Manifest.hh"
 #include "HashCalculator.hh"
 #include "Utils.hh"
+#include "Macros.hh"
 using namespace eostest;
 
 namespace {
@@ -77,12 +78,30 @@ std::string Manifest::toStringWithoutChecksum() const {
   return ss.str();
 }
 
-void Manifest::addFile(const std::string &file) {
-  files.insert(file);
+bool Manifest::exists(const std::string &name) {
+  if(files.count(name) != 0) return true;
+  if(directories.count(name) != 0) return true;
+  return false;
 }
 
-void Manifest::addSubdir(const std::string &subdir) {
+size_t Manifest::fileCount() const {
+  return files.size();
+}
+
+size_t Manifest::subdirCount() const {
+  return directories.size();
+}
+
+bool Manifest::tryAddFile(const std::string &file) {
+  if(exists(file)) return false;
+  files.insert(file);
+  return true;
+}
+
+bool Manifest::tryAddSubdir(const std::string &subdir) {
+  if(exists(subdir)) return false;
   directories.insert(subdir);
+  return true;
 }
 
 bool Manifest::popFile(std::string &file) {
