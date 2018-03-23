@@ -24,6 +24,7 @@
 #include <sstream>
 #include "../Macros.hh"
 #include "TestcaseStatus.hh"
+#include "Styling.hh"
 using namespace eostest;
 
 TestcaseStatus::TestcaseStatus() {}
@@ -42,6 +43,8 @@ bool TestcaseStatus::ok() const {
 
 std::string TestcaseStatus::toString() const {
   std::ostringstream ss;
+
+  ss << description << std::endl;
   for(size_t i = 0; i < errors.size(); i++) {
     ss << "- " << errors[i] << std::endl;
   }
@@ -50,8 +53,13 @@ std::string TestcaseStatus::toString() const {
 }
 
 void TestcaseStatus::absorbErrors(const TestcaseStatus &acc) {
+  // This function simply adds all errors found in the given TestcaseStatus,
+  // but retains its own description.
+  // addChild() is a better choice, if you want to retain the description of
+  // sub-errors.
+
   for(size_t i = 0; i < acc.errors.size(); i++) {
-    errors.push_back(SSTR("    " << acc.errors[i]));
+    errors.push_back(acc.errors[i]);
   }
 }
 
@@ -70,4 +78,29 @@ void TestcaseStatus::addChild(TestcaseStatus &&child) {
 
 std::string& TestcaseStatus::getDescription() {
   return description;
+}
+
+std::string TestcaseStatus::prettyPrint(size_t level) const {
+  std::ostringstream ss;
+
+  for(size_t i = 0; i < level*4; i++) {
+    ss << " ";
+  }
+
+  if(ok()) {
+    ss << Styling::success("PASS");
+  }
+  else {
+    ss << Styling::failure("FAIL");
+  }
+
+  ss << " " << description << std::endl;
+
+  // for(size_t i = 0; )
+
+
+
+
+
+  return ss.str();
 }

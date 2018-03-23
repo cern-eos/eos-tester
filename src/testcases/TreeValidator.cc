@@ -23,8 +23,10 @@
 
 #include <functional>
 #include <iostream>
+#include <rang.hpp>
 #include "TreeValidator.hh"
 #include "utils/ProgressTracker.hh"
+#include "utils/Sealing.hh"
 #include "../Manifest.hh"
 #include "../XrdClExecutor.hh"
 #include "../SelfCheckedFile.hh"
@@ -37,9 +39,13 @@ TreeValidator::TreeValidator(const std::string &base, ProgressTracker *track) : 
 }
 
 folly::Future<TestcaseStatus> TreeValidator::initialize() {
+  std::string description = SSTR(rang::style::bold << rang::fg::magenta << "Validate hierarchy" << rang::style::reset << " :: " << url);
+
+  if(tracker) tracker->setDescription(description);
+
   folly::Future<TestcaseStatus> fut = promise.getFuture();
   thread.reset(&TreeValidator::main, this);
-  return fut;
+  return Sealing::seal(std::move(fut), description);
 }
 
 ManifestHolder parseManifest(ReadStatus status, std::string path) {

@@ -38,6 +38,9 @@ int main(int argc, char **argv) {
   // Reset terminal colors on exit
   std::atexit([](){std::cout << rang::style::reset;});
 
+  // Force colours.
+  rang::setControlMode(rang::control::Force);
+
   TreeBuilder::Options builderOpts;
   std::string targetPath = "";
 
@@ -47,10 +50,10 @@ int main(int argc, char **argv) {
   app.require_subcommand();
 
   auto buildOpt = treeSubcommand->add_option("--build", targetPath, "Build a namespace tree in the specified URL.");
-  auto seedOpt = treeSubcommand->add_option("--seed", builderOpts.seed, "Random seed to use when building a namespace tree.")
+  auto seedOpt = treeSubcommand->add_option("--seed", builderOpts.seed, "Random seed to use when building a namespace tree.", true)
     ->needs(buildOpt);
 
-  auto depthOpt = treeSubcommand->add_option("--depth", builderOpts.depth, "The depth of the namespace tree to be created.")
+  auto depthOpt = treeSubcommand->add_option("--depth", builderOpts.depth, "The depth of the namespace tree to be created.", true)
     ->needs(buildOpt);
 
   auto nfilesOpt = treeSubcommand->add_option("--nfiles", builderOpts.files, "The size in number of files for the namesapce tree to build")
@@ -71,31 +74,31 @@ int main(int argc, char **argv) {
     return app.exit(e);
   }
 
+  int retval = 0;
+
   if(*buildOpt) {
     ProgressTracker tracker(builderOpts.files);
-    ProgressTicker ticker(tracker);
-
     builderOpts.baseUrl = targetPath;
     TreeBuilder builder(builderOpts, &tracker);
 
+    ProgressTicker ticker(tracker);
     TestcaseStatus accu = builder.initialize().get();
-    if(!accu.ok()) {
-      std::cout << accu.toString() << std::endl;
-      return 1;
-    }
+    ticker.stop();
+
+    std::cout << accu.prettyPrint();
+    if(!accu.ok()) retval = 1;
   }
   else if(*validateOpt) {
     ProgressTracker tracker(-1);
-    ProgressTicker ticker(tracker);
-
     TreeValidator validator(targetPath, &tracker);
-    TestcaseStatus accu = validator.initialize().get();
 
-    if(!accu.ok()) {
-      std::cout << accu.toString() << std::endl;
-      return 1;
-    }
+    ProgressTicker ticker(tracker);
+    TestcaseStatus accu = validator.initialize().get();
+    ticker.stop();
+
+    std::cout << accu.prettyPrint();
+    if(!accu.ok()) retval = 1;
   }
 
-  return 0;
+  return retval;
 }

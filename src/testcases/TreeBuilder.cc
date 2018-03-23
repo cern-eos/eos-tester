@@ -23,11 +23,14 @@
 
 #include <queue>
 #include <iostream>
+#include <rang.hpp>
 #include <XrdCl/XrdClFile.hh>
+#include "Macros.hh"
 #include "TreeBuilder.hh"
 #include "../XrdClExecutor.hh"
 #include "../HierarchyBuilder.hh"
 #include "utils/ProgressTracker.hh"
+#include "utils/Sealing.hh"
 using namespace eostest;
 
 TreeBuilder::TreeBuilder(const Options &opts, ProgressTracker *track) {
@@ -36,9 +39,14 @@ TreeBuilder::TreeBuilder(const Options &opts, ProgressTracker *track) {
 }
 
 folly::Future<TestcaseStatus> TreeBuilder::initialize() {
+  std::cout << std::endl;
+  std::string description = SSTR(rang::style::bold << rang::fg::magenta << "Construct hierarchy" << rang::style::reset << " :: Depth " << options.depth << " with " << options.files << " files");
+
+  if(tracker) tracker->setDescription(description);
+
   folly::Future<TestcaseStatus> fut = promise.getFuture();
   thread.reset(&TreeBuilder::main, this);
-  return fut;
+  return Sealing::seal(std::move(fut), description);
 }
 
 void TreeBuilder::main(ThreadAssistant &assistant) {

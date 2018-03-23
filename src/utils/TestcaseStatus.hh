@@ -45,6 +45,7 @@ public:
   void addChild(TestcaseStatus &&child);
 
   std::string& getDescription();
+  std::string prettyPrint(size_t level = 1) const;
 
 private:
   std::string description;

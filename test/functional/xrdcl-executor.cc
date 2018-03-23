@@ -25,6 +25,8 @@
 #include "XrdClExecutor.hh"
 #include "testcases/TreeBuilder.hh"
 #include "testcases/TreeValidator.hh"
+#include "utils/ProgressTracker.hh"
+#include "utils/ProgressTicker.hh"
 using namespace eostest;
 
 TEST(XrdClExecutor, BasicSanity) {
@@ -61,14 +63,34 @@ TEST(TreeValidator, BasicSanity) {
   opts.depth = 5;
   opts.files = 100;
 
-  TreeBuilder builder(opts);
+  ProgressTracker tracker2(opts.files);
+  TreeBuilder builder(opts, &tracker2);
+  ProgressTicker ticker2(tracker2);
 
   TestcaseStatus acc = builder.initialize().get();
-  ASSERT_TRUE(acc.ok()) << acc.toString();
+  ticker2.stop();
 
-  std::cout << "Construction OK, starting validation..." << std::endl;
+  std::cout << acc.prettyPrint();
+  ASSERT_TRUE(acc.ok());
 
-  TreeValidator validator(opts.baseUrl, nullptr);
+  ProgressTracker tracker(-1);
+  TreeValidator validator(opts.baseUrl, &tracker);
+  ProgressTicker ticker(tracker);
   acc = validator.initialize().get();
-  ASSERT_TRUE(acc.ok()) << acc.toString();
+
+  ticker.stop();
+  std::cout << acc.prettyPrint();
+  ASSERT_TRUE(acc.ok());
+}
+
+TEST(ProgressTicker, VisualTest) {
+  ProgressTracker tracker(5);
+  ProgressTicker ticker(tracker);
+
+  std::this_thread::sleep_for(std::chrono::seconds(5));
+
+
+
+
+
 }

@@ -26,8 +26,12 @@
 
 #include <atomic>
 #include <functional>
+#include <mutex>
+#include <vector>
 
 namespace eostest {
+
+class TestcaseStatus;
 
 class ProgressTracker {
 public:
@@ -63,11 +67,16 @@ public:
     return true;
   }
 
+  void setDescription(const std::string &str);
+  std::string getDescription() const;
+
 private:
   int32_t total;
   std::atomic<int32_t> inFlight {0};
   std::atomic<int32_t> successful {0};
   std::atomic<int32_t> failed {0};
+
+  std::string description;
 };
 
 }

@@ -36,6 +36,7 @@ public:
   ~ProgressTicker();
 
   void main(ThreadAssistant &assistant);
+  void stop();
 
 private:
   AssistedThread thread;

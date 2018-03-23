@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------------
-// File: ProgressTracker.cc
+// File: Styling.hh
 // Author: Georgios Bitzes - CERN
 // ----------------------------------------------------------------------
 
@@ -21,58 +21,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#include "utils/TestcaseStatus.hh"
-#include "ProgressTracker.hh"
-#include "Macros.hh"
-using namespace eostest;
+#ifndef EOSTESTER_STYLING_H
+#define EOSTESTER_STYLING_H
 
-ProgressTracker::ProgressTracker(int32_t ops) : total(ops) { }
-ProgressTracker::~ProgressTracker() {}
+class Styling {
+public:
+  static std::string success(const std::string &val);
+  static std::string failure(const std::string &val);
+};
 
-void ProgressTracker::addInFlight() {
-  eost_assert(!totalKnown() || (inFlight + 1 + successful + failed) <= total);
-  inFlight++;
-}
-
-void ProgressTracker::addSuccessful() {
-  eost_assert(inFlight >= 1);
-
-  successful++;
-  inFlight--;
-}
-
-void ProgressTracker::addFailed() {
-  eost_assert(inFlight >= 1);
-
-  failed++;
-  inFlight--;
-}
-
-int32_t ProgressTracker::getInFlight() {
-  return inFlight;
-}
-
-int32_t ProgressTracker::getSuccessful() {
-  return successful;
-}
-
-int32_t ProgressTracker::getFailed() {
-  return failed;
-}
-
-int32_t ProgressTracker::getPending() {
-  if(!totalKnown()) return 0;
-  return total - (inFlight + successful + failed);
-}
-
-bool ProgressTracker::totalKnown() const {
-  return total > 0;
-}
-
-void ProgressTracker::setDescription(const std::string &str) {
-  description = str;
-}
-
-std::string ProgressTracker::getDescription() const {
-  return description;
-}
+#endif

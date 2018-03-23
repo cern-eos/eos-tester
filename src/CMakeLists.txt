@@ -17,6 +17,7 @@ add_library(eostester STATIC
   HierarchyBuilder.cc                                    HierarchyBuilder.hh
   Manifest.cc                                            Manifest.hh
   SelfCheckedFile.cc                                     SelfCheckedFile.hh
+  Styling.cc                                             Styling.hh
   Utils.cc                                               Utils.hh
   XrdClExecutor.cc                                       XrdClExecutor.hh
 )

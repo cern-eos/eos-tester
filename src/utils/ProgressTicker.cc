@@ -23,6 +23,7 @@
 
 #include "ProgressTicker.hh"
 #include "utils/ProgressTracker.hh"
+#include <rang.hpp>
 #include <iostream>
 using namespace eostest;
 
@@ -33,9 +34,33 @@ ProgressTicker::ProgressTicker(ProgressTracker &track) : tracker(track) {
 ProgressTicker::~ProgressTicker() {}
 
 void ProgressTicker::main(ThreadAssistant &assistant) {
+  rang::setControlMode(rang::control::Force);
+
+  size_t dots = 1;
+
   while(!assistant.terminationRequested()) {
+    dots++;
+    dots = (dots % 4);
+
     std::cout << "\x1b[2K\r";
-    std::cout << "Pending: " << tracker.getPending() << ", in-flight: " << tracker.getInFlight() << ", succeeded: " << tracker.getSuccessful() << ", failed: " << tracker.getFailed() << "\r" << std::flush;
+    std::cout << "    ";
+
+    for(size_t i = 0; i < 5; i++) {
+      if(dots >= i) {
+        std::cout << ".";
+      }
+      else {
+        std::cout << " ";
+      }
+    }
+
+    std::cout << tracker.getDescription() << "  Pending: " << tracker.getPending() << ", in-flight: " << tracker.getInFlight() << ", succeeded: " << tracker.getSuccessful() << ", failed: " << tracker.getFailed() << "\r" << std::flush;
     assistant.wait_for(std::chrono::seconds(1));
   }
+
+  std::cout << "\x1b[2K\r";
+}
+
+void ProgressTicker::stop() {
+  thread.join();
 }
