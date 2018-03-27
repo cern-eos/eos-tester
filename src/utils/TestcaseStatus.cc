@@ -80,12 +80,16 @@ std::string& TestcaseStatus::getDescription() {
   return description;
 }
 
+static void printMany(std::ostringstream &ss, const std::string &str, size_t times) {
+  for(size_t i = 0; i < times; i++) {
+    ss << str;
+  }
+}
+
 std::string TestcaseStatus::prettyPrint(size_t level) const {
   std::ostringstream ss;
 
-  for(size_t i = 0; i < level*4; i++) {
-    ss << " ";
-  }
+  printMany(ss, " ", level*4);
 
   if(ok()) {
     ss << Styling::success("PASS");
@@ -96,11 +100,14 @@ std::string TestcaseStatus::prettyPrint(size_t level) const {
 
   ss << " " << description << std::endl;
 
-  // for(size_t i = 0; )
+  for(size_t i = 0; i < errors.size(); i++) {
+    printMany(ss, " ", (level+1)*4);
+    ss << errors[i] << std::endl;
+  }
 
-
-
-
+  for(size_t i = 0; i < children.size(); i++) {
+    ss << children[i].prettyPrint(level+1);
+  }
 
   return ss.str();
 }

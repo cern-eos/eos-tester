@@ -27,6 +27,7 @@
 #include "utils/ProgressTracker.hh"
 #include "utils/Sealing.hh"
 #include "Macros.hh"
+#include <rang.hpp>
 using namespace eostest;
 
 TEST(HashCalculator, BasicSanity) {
@@ -136,4 +137,33 @@ TEST(Utils, Sealing) {
   TestcaseStatus st = fut.get();
   ASSERT_EQ(st.getDescription(), "A random description");
   ASSERT_TRUE(st.getDuration() > std::chrono::microseconds(500));
+}
+
+TEST(Utils, VisualTestSuccess) {
+  rang::setControlMode(rang::control::Force);
+
+  TestcaseStatus status;
+  status.seal("An awesome test", std::chrono::milliseconds(3));
+
+  std::cout << status.prettyPrint() << std::endl;
+}
+
+TEST(Utils, VisualTestFailure) {
+  rang::setControlMode(rang::control::Force);
+
+  TestcaseStatus status;
+  status.seal("A less than awesome test", std::chrono::milliseconds(30));
+  status.addError("The Earth blew up.");
+
+  TestcaseStatus st1;
+  st1.seal("This sub-test passed", std::chrono::milliseconds(9));
+
+  TestcaseStatus st2;
+  st2.seal("This sub-test did not", std::chrono::milliseconds(5));
+  st2.addError("The Moon blew up.");
+
+  status.addChild(std::move(st1));
+  status.addChild(std::move(st2));
+
+  std::cout << status.prettyPrint() << std::endl;
 }
