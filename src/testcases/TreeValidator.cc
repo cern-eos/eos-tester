@@ -35,6 +35,11 @@
 using namespace eostest;
 
 TreeValidator::TreeValidator(const std::string &base, ProgressTracker *track) : url(base) {
+
+  while(!url.empty() && url.back() == '/') {
+    url.pop_back();
+  }
+
   tracker = track;
 }
 
