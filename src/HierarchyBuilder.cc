@@ -33,6 +33,11 @@ HierarchyBuilder::HierarchyBuilder(const HierarchyConstructionOptions &opt)
 : options(opt), generator(options.seed) {
 
   options.files -= 1; // take top-level MANIFEST into account
+
+  while(!options.base.empty() && options.base.back() == '/') {
+    options.base.pop_back();
+  }
+
   insertNode(options.base, 0);
 }
 

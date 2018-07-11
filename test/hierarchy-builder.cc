@@ -27,7 +27,7 @@ using namespace eostest;
 
 TEST(HierachyBuilder, BasicSanity) {
   HierarchyConstructionOptions options;
-  options.base = "/eos/test";
+  options.base = "/eos/test//";
   options.seed = 42;
   options.depth = 12;
   options.files = 50;
