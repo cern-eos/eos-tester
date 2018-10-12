@@ -73,7 +73,7 @@ void TreeBuilder::main(ThreadAssistant &assistant) {
 
     // Pop any ready futures at the head of the queue
     while(!queue.empty() && (queue.front().isReady() || queue.size() >= pipelineLength)) {
-      accumulator.absorbErrors(queue.front().get());
+      accumulator.absorbErrors(std::move(queue.front()).get());
       queue.pop();
     }
 
@@ -82,7 +82,7 @@ void TreeBuilder::main(ThreadAssistant &assistant) {
       HierarchyEntry entry;
       if(!hierarchyBuilder.next(entry)) {
         while(!queue.empty()) {
-          accumulator.absorbErrors(queue.front().get());
+          accumulator.absorbErrors(std::move(queue.front()).get());
           queue.pop();
         }
         goto out;

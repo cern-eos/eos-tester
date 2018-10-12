@@ -23,7 +23,7 @@ include_directories(
 #-------------------------------------------------------------------------------
 # Compiler options
 #-------------------------------------------------------------------------------
-add_definitions(-Wall -Wextra -Werror -Wno-unused-parameter -g3 -std=c++14)
+add_definitions(-Wall -Wextra -Werror -Wno-unused-parameter -g3 -std=c++17)
 
 #-------------------------------------------------------------------------------
 # Support absolute includes

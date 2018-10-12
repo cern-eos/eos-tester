@@ -178,7 +178,7 @@ void TreeValidator::main(ThreadAssistant &assistant) {
 
     if(!unexpandedChildren.empty()) {
       // Case 3: Expand a directory
-      stack.push_back(insertLevel(unexpandedChildren.front().get()));
+      stack.push_back(insertLevel(std::move(unexpandedChildren.front()).get()));
       acc.absorbErrors(stack.back().manifest);
       unexpandedChildren.pop_front();
     }

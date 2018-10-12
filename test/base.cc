@@ -134,7 +134,7 @@ TEST(Utils, Sealing) {
   promise.setValue(TestcaseStatus());
   ASSERT_TRUE(fut.isReady());
 
-  TestcaseStatus st = fut.get();
+  TestcaseStatus st = std::move(fut).get();
   ASSERT_EQ(st.getDescription(), "A random description");
   ASSERT_TRUE(st.getDuration() > std::chrono::microseconds(500));
 }
