@@ -4,7 +4,7 @@
 // ----------------------------------------------------------------------
 
 /************************************************************************
- * eos-tester - a tool for stress testing EOS instances                 *
+ * quarkdb - a redis-like highly available key-value store              *
  * Copyright (C) 2018 CERN/Switzerland                                  *
  *                                                                      *
  * This program is free software: you can redistribute it and/or modify *
@@ -21,8 +21,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#ifndef EOSTESTER_ASSISTED_THREAD_H
-#define EOSTESTER_ASSISTED_THREAD_H
+#ifndef EOS_TESTER_ASSISTED_THREAD_H
+#define EOS_TESTER_ASSISTED_THREAD_H
 
 #include <atomic>
 #include <thread>
@@ -35,8 +35,6 @@ namespace eostest {
 class AssistedThread;
 class ThreadAssistant {
 public:
-  ThreadAssistant(bool flag) : stopFlag(flag) {}
-
   void reset() {
     stopFlag = false;
   }
@@ -68,6 +66,8 @@ public:
   }
 
 private:
+  // Private constructor - only AssistedThread can create such an object.
+  ThreadAssistant(bool flag) : stopFlag(flag) {}
   friend class AssistedThread;
 
   std::atomic<bool> stopFlag;
@@ -78,25 +78,32 @@ private:
 class AssistedThread {
 public:
   // null constructor, no underlying thread
-  AssistedThread() : assistant(true), joined(true) { }
+  AssistedThread() : assistant(new ThreadAssistant(true)), joined(true) { }
 
   // universal references, perfect forwarding, variadic template
   // (C++ is intensifying)
   template<typename... Args>
-  AssistedThread(Args&&... args) : assistant(false), joined(false), th(std::forward<Args>(args)..., std::ref(assistant)) {
+  AssistedThread(Args&&... args) : assistant(new ThreadAssistant(false)), joined(false), th(std::forward<Args>(args)..., std::ref(*assistant)) {
   }
 
-  // No assignment Only allow assignment to rvalues
+  // No assignment, no copying
   AssistedThread& operator=(const AssistedThread&) = delete;
-  AssistedThread& operator=(AssistedThread&& src) = delete;
+
+  // Moving is allowed.
+  AssistedThread(AssistedThread&& other) {
+    assistant = std::move(other.assistant);
+    joined = other.joined;
+    th = std::move(other.th);
+    other.joined = true;
+  }
 
   template<typename... Args>
   void reset(Args&&... args) {
     join();
 
-    assistant.reset();
+    assistant.get()->reset();
     joined = false;
-    th = std::thread(std::forward<Args>(args)..., std::ref(assistant));
+    th = std::thread(std::forward<Args>(args)..., std::ref(*assistant));
   }
 
   virtual ~AssistedThread() {
@@ -105,7 +112,7 @@ public:
 
   void stop() {
     if(joined) return;
-    assistant.requestTermination();
+    assistant->requestTermination();
   }
 
   void join() {
@@ -125,9 +132,8 @@ public:
   }
 
 private:
-  ThreadAssistant assistant;
-
-  std::atomic<bool> joined;
+  std::unique_ptr<ThreadAssistant> assistant;
+  bool joined;
   std::thread th;
 };
 
