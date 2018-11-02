@@ -21,10 +21,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#include <folly/futures/Future.h>
 #include "utils/TestcaseStatus.hh"
 #include "utils/AssistedThread.hh"
 #include "Manifest.hh"
+
+#include <XrdCl/XrdClURL.hh>
+
+#include <folly/futures/Future.h>
+#include <folly/executors/Async.h>
+
+#include <memory>
 
 namespace eostest {
 
@@ -54,9 +60,17 @@ private:
   ProgressTracker* tracker = nullptr;
 
   TreeLevel insertLevel(ManifestHolder manifest);
-  folly::Future<ManifestHolder> validateSingleDirectory(const std::string &path);
-  folly::Future<ManifestHolder> validateContainedFiles(ManifestHolder holder, std::string path);
+  folly::Future<ManifestHolder> validateSingleDirectory(size_t connectionId, const std::string &path);
+  folly::Future<ManifestHolder> validateContainedFiles(size_t connectionId, ManifestHolder holder, std::string path);
+  folly::Future<TestcaseStatus> validateSingleFile(size_t connectionId, const std::string &path);
 
+  void worker(std::string url, TestcaseStatus &acc, ThreadAssistant &assistant);
+
+  size_t getConnectionId() {
+    return (currentConnectionId++) % 32;
+  }
+
+  std::atomic<size_t> currentConnectionId = 0;
 };
 
 }

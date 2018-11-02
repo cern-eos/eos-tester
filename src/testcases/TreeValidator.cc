@@ -21,9 +21,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.*
  ************************************************************************/
 
-#include <functional>
-#include <iostream>
-#include <rang.hpp>
 #include "TreeValidator.hh"
 #include "utils/ProgressTracker.hh"
 #include "utils/Sealing.hh"
@@ -32,10 +29,15 @@
 #include "../SelfCheckedFile.hh"
 #include "Macros.hh"
 #include "Utils.hh"
+
+#include <rang.hpp>
+
+#include <functional>
+#include <iostream>
+
 using namespace eostest;
 
 TreeValidator::TreeValidator(const std::string &base, ProgressTracker *track) : url(base) {
-
   while(!url.empty() && url.back() == '/') {
     url.pop_back();
   }
@@ -85,8 +87,8 @@ TestcaseStatus parseFile(ReadStatus status, std::string path) {
   return SelfCheckedFile::validate(status.contents, XrdCl::URL(path).GetPath());
 }
 
-folly::Future<ManifestHolder> fetchManifest(std::string path) {
-  folly::Future<ReadStatus> readStatus = XrdClExecutor::get(1, path);
+folly::Future<ManifestHolder> fetchManifest(size_t connectionId, std::string path) {
+  folly::Future<ReadStatus> readStatus = XrdClExecutor::get(connectionId, path);
   return readStatus.then(std::bind(parseManifest, std::placeholders::_1, XrdCl::URL(path).GetPath()));
 }
 
@@ -105,8 +107,8 @@ ManifestHolder validateManifest(std::tuple<ManifestHolder, DirListStatus> tup) {
   return manifestHolder;
 }
 
-folly::Future<TestcaseStatus> validateSingleFile(const std::string &path) {
-  folly::Future<ReadStatus> readStatus = XrdClExecutor::get(1, path);
+folly::Future<TestcaseStatus> TreeValidator::validateSingleFile(size_t connectionId, const std::string &path) {
+  folly::Future<ReadStatus> readStatus = XrdClExecutor::get(connectionId, path);
   return readStatus.then(std::bind(parseFile, std::placeholders::_1, path));
 }
 
@@ -118,26 +120,27 @@ ManifestHolder combineErrors(ManifestHolder &holder, std::vector<TestcaseStatus>
   return std::move(holder);
 }
 
-folly::Future<ManifestHolder> TreeValidator::validateContainedFiles(ManifestHolder holder, std::string path) {
+folly::Future<ManifestHolder> TreeValidator::validateContainedFiles(size_t connectionId, ManifestHolder holder, std::string path) {
   std::vector<folly::Future<TestcaseStatus>> accus;
 
   std::string file;
   while(holder.manifest.popFile(file)) {
-    folly::Future<TestcaseStatus> st = validateSingleFile(SSTR(path << "/" << file));
+    folly::Future<TestcaseStatus> st = validateSingleFile(connectionId, SSTR(path << "/" << file));
     if(tracker) st = tracker->filterFuture(std::move(st));
     accus.emplace_back(std::move(st));
   }
 
-  return folly::collect(accus).then(std::bind(combineErrors, std::move(holder), std::placeholders::_1));
+  return folly::collect(accus)
+    .then(std::bind(combineErrors, std::move(holder), std::placeholders::_1));
 }
 
-folly::Future<ManifestHolder> TreeValidator::validateSingleDirectory(const std::string &path) {
-  folly::Future<DirListStatus> dirList = XrdClExecutor::dirList(1, path);
-  folly::Future<ManifestHolder> holder = fetchManifest(SSTR(path << "/MANIFEST"));
+folly::Future<ManifestHolder> TreeValidator::validateSingleDirectory(size_t connectionId, const std::string &path) {
+  folly::Future<DirListStatus> dirList = XrdClExecutor::dirList(connectionId, path);
+  folly::Future<ManifestHolder> holder = fetchManifest(connectionId, SSTR(path << "/MANIFEST"));
 
   return folly::collect(holder, dirList)
     .then(validateManifest)
-    .then(std::bind(&TreeValidator::validateContainedFiles, this, std::placeholders::_1, path));
+    .then(std::bind(&TreeValidator::validateContainedFiles, this, connectionId, std::placeholders::_1, path));
 }
 
 eostest::TreeLevel TreeValidator::insertLevel(ManifestHolder manifest) {
@@ -148,7 +151,7 @@ eostest::TreeLevel TreeValidator::insertLevel(ManifestHolder manifest) {
   std::string subdir;
   while(level.manifest.manifest.popSubdir(subdir)) {
     base.SetPath(SSTR(chopPath(level.manifest.manifest.getFilename()) << "/" << subdir));
-    level.unexpandedChildren.push_back(validateSingleDirectory(base.GetURL()));
+    level.unexpandedChildren.push_back(validateSingleDirectory(getConnectionId(), base.GetURL()));
   }
 
   return level;
@@ -157,23 +160,29 @@ eostest::TreeLevel TreeValidator::insertLevel(ManifestHolder manifest) {
 void TreeValidator::main(ThreadAssistant &assistant) {
   TestcaseStatus acc;
 
-  std::deque<TreeLevel> stack;
-  stack.emplace_back(insertLevel(validateSingleDirectory(url).get()));
-  acc.absorbErrors(stack.back().manifest);
+  AssistedThread worker1(&TreeValidator::worker, this, url, std::ref(acc));
+  assistant.propagateTerminationSignal(worker1);
+  worker1.blockUntilThreadJoins();
 
+  promise.setValue(std::move(acc));
+}
+
+void TreeValidator::worker(std::string url, TestcaseStatus &acc, ThreadAssistant &assistant) {
+  std::deque<TreeLevel> stack;
+  stack.emplace_back(insertLevel(validateSingleDirectory(getConnectionId(), url).get()));
+  acc.absorbErrors(stack.back().manifest);
   XrdCl::URL base(url);
-  ManifestHolder holder;
 
   while(true) {
-    // Case 1: Early termination requested
+    // Early termination requested?
     if(assistant.terminationRequested()) {
-      acc.addError("Early termination requested");
       break;
     }
 
-    // Case 2: We're done.
-    if(stack.empty()) break;
-
+    if(stack.empty()) {
+      // We've exhausted our designated search space, return to caller.
+      break;
+    }
     auto& unexpandedChildren = stack.back().unexpandedChildren;
 
     if(!unexpandedChildren.empty()) {
@@ -187,6 +196,4 @@ void TreeValidator::main(ThreadAssistant &assistant) {
       stack.pop_back();
     }
   }
-
-  promise.setValue(std::move(acc));
 }
