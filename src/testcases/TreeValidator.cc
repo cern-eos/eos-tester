@@ -89,7 +89,7 @@ TestcaseStatus parseFile(ReadStatus status, std::string path) {
 
 folly::Future<ManifestHolder> fetchManifest(size_t connectionId, std::string path) {
   folly::Future<ReadStatus> readStatus = XrdClExecutor::get(connectionId, path);
-  return readStatus.then(std::bind(parseManifest, std::placeholders::_1, XrdCl::URL(path).GetPath()));
+  return std::move(readStatus).thenValue(std::bind(parseManifest, std::placeholders::_1, XrdCl::URL(path).GetPath()));
 }
 
 ManifestHolder validateManifest(std::tuple<ManifestHolder, DirListStatus> tup) {
@@ -109,7 +109,7 @@ ManifestHolder validateManifest(std::tuple<ManifestHolder, DirListStatus> tup) {
 
 folly::Future<TestcaseStatus> TreeValidator::validateSingleFile(size_t connectionId, const std::string &path) {
   folly::Future<ReadStatus> readStatus = XrdClExecutor::get(connectionId, path);
-  return readStatus.then(std::bind(parseFile, std::placeholders::_1, path));
+  return std::move(readStatus).thenValue(std::bind(parseFile, std::placeholders::_1, path));
 }
 
 ManifestHolder combineErrors(ManifestHolder &holder, std::vector<TestcaseStatus> errors) {
@@ -131,7 +131,7 @@ folly::Future<ManifestHolder> TreeValidator::validateContainedFiles(size_t conne
   }
 
   return folly::collect(accus)
-    .then(std::bind(combineErrors, std::move(holder), std::placeholders::_1));
+    .thenValue(std::bind(combineErrors, std::move(holder), std::placeholders::_1));
 }
 
 folly::Future<ManifestHolder> TreeValidator::validateSingleDirectory(size_t connectionId, const std::string &path) {
@@ -139,8 +139,8 @@ folly::Future<ManifestHolder> TreeValidator::validateSingleDirectory(size_t conn
   folly::Future<ManifestHolder> holder = fetchManifest(connectionId, SSTR(path << "/MANIFEST"));
 
   return folly::collect(holder, dirList)
-    .then(validateManifest)
-    .then(std::bind(&TreeValidator::validateContainedFiles, this, connectionId, std::placeholders::_1, path));
+    .thenValue(validateManifest)
+    .thenValue(std::bind(&TreeValidator::validateContainedFiles, this, connectionId, std::placeholders::_1, path));
 }
 
 eostest::TreeLevel TreeValidator::insertLevel(ManifestHolder manifest) {

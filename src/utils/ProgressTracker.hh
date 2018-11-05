@@ -52,7 +52,7 @@ public:
   template<typename T>
   T filterFuture(T&& fut) {
     addInFlight();
-    return fut.filter(std::bind(&ProgressTracker::futureCallback<typename T::value_type>, this, std::placeholders::_1));
+    return std::move(fut).filter(std::bind(&ProgressTracker::futureCallback<typename T::value_type>, this, std::placeholders::_1));
   }
 
   template<typename T>

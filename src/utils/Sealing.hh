@@ -46,7 +46,7 @@ public:
     PendingSeal pendingSeal;
     pendingSeal.description = description;
     pendingSeal.startTime = std::chrono::steady_clock::now();
-    return fut.then(std::bind(Sealing::callback<T>, pendingSeal, std::placeholders::_1));
+    return std::move(fut).thenValue(std::bind(Sealing::callback<T>, pendingSeal, std::placeholders::_1));
   }
 
   template<typename T>
