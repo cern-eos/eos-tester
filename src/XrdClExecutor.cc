@@ -187,19 +187,19 @@ public:
 
   folly::Future<OutgoingStatus> initialize(IncomingStatus incoming) {
     folly::Future<OutgoingStatus> fut = promise.getFuture();
+    incomingStatus = std::move(incoming);
 
-    if(!incoming.ok()) {
-      setValueAndDeleteThis(promise, OutgoingStatus(std::move(incoming)));
+    if(!incomingStatus.ok()) {
+      setValueAndDeleteThis(promise, OutgoingStatus(std::move(incomingStatus)));
       return fut;
     }
 
-    XrdCl::XRootDStatus status = incoming.file->Close(this);
+    XrdCl::XRootDStatus status = incomingStatus.file->Close(this);
     if(!status.IsOK()) {
-      incoming.addError(status.ToString());
-      setValueAndDeleteThis(promise, OutgoingStatus(std::move(incoming)));
+      incomingStatus.addError(status.ToString());
+      setValueAndDeleteThis(promise, OutgoingStatus(std::move(incomingStatus)));
     }
 
-    incomingStatus = std::move(incoming);
     return fut;
   }
 
