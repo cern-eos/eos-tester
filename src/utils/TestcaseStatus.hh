@@ -43,6 +43,7 @@ public:
   void seal(const std::string &description, std::chrono::nanoseconds duration = std::chrono::nanoseconds(0));
   std::chrono::nanoseconds getDuration();
   void addChild(TestcaseStatus &&child);
+  bool absorbChildIfError(TestcaseStatus &&child);
 
   std::string& getDescription();
   std::string prettyPrint(size_t level = 1) const;

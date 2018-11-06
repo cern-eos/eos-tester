@@ -68,8 +68,11 @@ bool TestcaseStatus::absorbErrors(const TestcaseStatus &acc) {
     errors.push_back(acc.errors[i]);
   }
 
-  return !acc.errors.empty();
+  for(size_t i = 0; i < acc.children.size(); i++) {
+    children.push_back(acc.children[i]);
+  }
 
+  return !acc.ok();
 }
 
 void TestcaseStatus::seal(const std::string &descr, std::chrono::nanoseconds dur) {
@@ -83,6 +86,15 @@ std::chrono::nanoseconds TestcaseStatus::getDuration() {
 
 void TestcaseStatus::addChild(TestcaseStatus &&child) {
   children.emplace_back(std::move(child));
+}
+
+bool TestcaseStatus::absorbChildIfError(TestcaseStatus &&child) {
+  if(!child.ok()) {
+    children.emplace_back(std::move(child));
+    return true;
+  }
+
+  return false;
 }
 
 std::string& TestcaseStatus::getDescription() {

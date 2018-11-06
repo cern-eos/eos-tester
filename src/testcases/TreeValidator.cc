@@ -77,12 +77,11 @@ ManifestHolder parseManifest(ReadStatus status, std::string path) {
 }
 
 TestcaseStatus parseFile(ReadStatus status, std::string path) {
-  TestcaseStatus accu;
-
-  if(accu.absorbErrors(status)) {
-    return accu;
+  if(!status.ok()) {
+    return status;
   }
 
+  TestcaseStatus accu;
   accu.absorbErrors(
     SelfCheckedFile::validate(status.contents, XrdCl::URL(path).GetPath())
   );
@@ -118,10 +117,10 @@ folly::Future<TestcaseStatus> TreeValidator::validateSingleFile(size_t connectio
 
 ManifestHolder combineErrors(ManifestHolder &holder, std::vector<TestcaseStatus> errors) {
   for(size_t i = 0; i < errors.size(); i++) {
-    holder.absorbErrors(errors[i]);
+    holder.absorbChildIfError(std::move(errors[i]));
   }
 
-  return std::move(holder);
+  return holder;
 }
 
 folly::Future<ManifestHolder> TreeValidator::validateContainedFiles(size_t connectionId, ManifestHolder holder, std::string path) {
