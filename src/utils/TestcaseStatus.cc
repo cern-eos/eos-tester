@@ -38,7 +38,13 @@ void TestcaseStatus::addError(const std::string &err) {
 }
 
 bool TestcaseStatus::ok() const {
-  return errors.empty();
+  if(!errors.empty()) return false;
+
+  for(size_t i = 0; i < children.size(); i++) {
+    if(!children[i].ok()) return false;
+  }
+
+  return true;
 }
 
 std::string TestcaseStatus::toString() const {
@@ -52,7 +58,7 @@ std::string TestcaseStatus::toString() const {
   return ss.str();
 }
 
-void TestcaseStatus::absorbErrors(const TestcaseStatus &acc) {
+bool TestcaseStatus::absorbErrors(const TestcaseStatus &acc) {
   // This function simply adds all errors found in the given TestcaseStatus,
   // but retains its own description.
   // addChild() is a better choice, if you want to retain the description of
@@ -61,6 +67,9 @@ void TestcaseStatus::absorbErrors(const TestcaseStatus &acc) {
   for(size_t i = 0; i < acc.errors.size(); i++) {
     errors.push_back(acc.errors[i]);
   }
+
+  return !acc.errors.empty();
+
 }
 
 void TestcaseStatus::seal(const std::string &descr, std::chrono::nanoseconds dur) {

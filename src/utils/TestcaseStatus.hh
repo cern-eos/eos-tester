@@ -37,10 +37,10 @@ public:
   TestcaseStatus(const std::string &err);
   void addError(const std::string &err);
   bool ok() const;
-  void absorbErrors(const TestcaseStatus &acc);
+  bool absorbErrors(const TestcaseStatus &acc);
   std::string toString() const;
 
-  void seal(const std::string &description, std::chrono::nanoseconds duration);
+  void seal(const std::string &description, std::chrono::nanoseconds duration = std::chrono::nanoseconds(0));
   std::chrono::nanoseconds getDuration();
   void addChild(TestcaseStatus &&child);
 

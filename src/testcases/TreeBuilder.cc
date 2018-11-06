@@ -40,7 +40,7 @@ TreeBuilder::TreeBuilder(const Options &opts, ProgressTracker *track) {
 
 folly::Future<TestcaseStatus> TreeBuilder::initialize() {
   std::cout << std::endl;
-  std::string description = SSTR(rang::style::bold << rang::fg::magenta << "Construct hierarchy" << rang::style::reset << " :: Depth " << options.depth << " with " << options.files << " files");
+  std::string description = SSTR(rang::style::bold << rang::fg::magenta << "Construct tree" << rang::style::reset << " :: Depth " << options.depth << " with " << options.files << " files");
 
   if(tracker) tracker->setDescription(description);
 

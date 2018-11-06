@@ -46,7 +46,7 @@ TreeValidator::TreeValidator(const std::string &base, ProgressTracker *track) : 
 }
 
 folly::Future<TestcaseStatus> TreeValidator::initialize() {
-  std::string description = SSTR(rang::style::bold << rang::fg::magenta << "Validate hierarchy" << rang::style::reset << " :: " << url);
+  std::string description = SSTR(rang::style::bold << rang::fg::magenta << "Validate tree" << rang::style::reset << " :: " << url);
 
   if(tracker) tracker->setDescription(description);
 
@@ -79,12 +79,16 @@ ManifestHolder parseManifest(ReadStatus status, std::string path) {
 TestcaseStatus parseFile(ReadStatus status, std::string path) {
   TestcaseStatus accu;
 
-  if(!status.ok()) {
-    accu.absorbErrors(status);
+  if(accu.absorbErrors(status)) {
     return accu;
   }
 
-  return SelfCheckedFile::validate(status.contents, XrdCl::URL(path).GetPath());
+  accu.absorbErrors(
+    SelfCheckedFile::validate(status.contents, XrdCl::URL(path).GetPath())
+  );
+
+  accu.seal(SSTR("Validate self-checked-file " << path));
+  return accu;
 }
 
 folly::Future<ManifestHolder> fetchManifest(size_t connectionId, std::string path) {
