@@ -99,13 +99,12 @@ ManifestHolder validateManifest(std::tuple<ManifestHolder, DirListStatus> tup) {
   ManifestHolder manifestHolder = std::move(std::get<0>(tup));
   DirListStatus dirList = std::move(std::get<1>(tup));
 
-  if(!manifestHolder.ok() || dirList.ok()) return manifestHolder;
+  if(!manifestHolder.ok() || !dirList.ok()) return manifestHolder;
 
   // Manifest is OK. Do manifest contents and dirList match?
-  if(!manifestHolder.manifest.crossCheckDirlist(*dirList.contents)) {
-    manifestHolder.addError(SSTR("Mismatch between dirlist and manifest contents for " << manifestHolder.manifest.getFilename()));
-    return manifestHolder;
-  }
+  manifestHolder.absorbChildIfError(
+    manifestHolder.manifest.crossCheckDirlist(*dirList.contents)
+  );
 
   return manifestHolder;
 }

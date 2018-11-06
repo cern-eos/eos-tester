@@ -26,6 +26,7 @@
 
 #include <set>
 #include <string>
+#include "utils/TestcaseStatus.hh"
 
 namespace XrdCl {
   class DirectoryList;
@@ -60,7 +61,7 @@ public:
   std::set<std::string>& getDirectories();
   std::set<std::string>& getFiles();
 
-  bool crossCheckDirlist(XrdCl::DirectoryList &dirlist);
+  TestcaseStatus crossCheckDirlist(XrdCl::DirectoryList &dirlist);
 
 private:
   bool parseList(const std::string &contents, size_t& index, bool dir);

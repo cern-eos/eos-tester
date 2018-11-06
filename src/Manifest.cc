@@ -179,7 +179,10 @@ std::set<std::string>& Manifest::getFiles() {
   return files;
 }
 
-bool Manifest::crossCheckDirlist(XrdCl::DirectoryList& dirlist) {
+TestcaseStatus Manifest::crossCheckDirlist(XrdCl::DirectoryList& dirlist) {
+  TestcaseStatus retval;
+  retval.seal("Cross-check directory contents predicted by MANIFEST, and actual dirlist");
+
   size_t directoryCount = 0;
   size_t fileCount = 0;
 
@@ -187,16 +190,47 @@ bool Manifest::crossCheckDirlist(XrdCl::DirectoryList& dirlist) {
     // Directory?
     if(dirlist.At(i)->GetStatInfo()->TestFlags(XrdCl::StatInfo::IsDir)) {
       directoryCount++;
-      if(directories.count(dirlist.At(i)->GetName()) == 0) return false;
+      if(directories.count(dirlist.At(i)->GetName()) == 0) {
+        retval.addError(SSTR("Found directory on server, but not in MANIFEST: " << dirlist.At(i)->GetName()));
+        return retval;
+      }
     }
-    else {
+    else if(dirlist.At(i)->GetName() != "MANIFEST") {
       // File
       fileCount++;
-      if(files.count(dirlist.At(i)->GetName()) == 0) return false;
+      if(files.count(dirlist.At(i)->GetName()) == 0) {
+        retval.addError(SSTR("Found file on server, but not in MANIFEST: " << dirlist.At(i)->GetName()));
+        return retval;
+      }
     }
   }
 
-  if(directories.size() != directoryCount) return false;
-  if(files.size() != fileCount) return false;
-  return true;
+  if(directories.size() != directoryCount) {
+    retval.addError(SSTR("Mismatch between number of directories predicted by MANIFEST (" << directories.size() << ") and reality (" << directoryCount << ")"));
+  }
+
+  if(files.size() != fileCount) {
+    retval.addError(SSTR("Mismatch between number of files predicted by MANIFEST (" << files.size() << ") and reality (" << fileCount << ")"));
+  }
+
+  if(!retval.ok()) {
+    retval.addError("MANIFEST files: ");
+    for(auto it = files.begin(); it != files.end(); it++) {
+      retval.addError(*it);
+    }
+
+    retval.addError("");
+    retval.addError("MANIFEST directories: ");
+    for(auto it = directories.begin(); it != directories.end(); it++) {
+      retval.addError(*it);
+    }
+
+    retval.addError("");
+    retval.addError("Dirlist provided by server:");
+    for(size_t i = 0; i < dirlist.GetSize(); i++) {
+      retval.addError(dirlist.At(i)->GetName());
+    }
+  }
+
+  return retval;
 }
